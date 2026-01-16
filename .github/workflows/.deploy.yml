@@ -47,7 +47,7 @@ jobs:
           port: ${{ secrets.SSH_PORT }}
           script: |
             cd ${{ secrets.DEPLOY_PATH }}
-            php artisan migrate
+            php artisan migrate --force
             php artisan db:seed --force
             php artisan key:generate
             php artisan config:cache
