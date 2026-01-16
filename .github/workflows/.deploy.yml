@@ -17,8 +17,8 @@ jobs:
       - name: ⚙️ Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: "8.2"
-        # Installe PHP 8.2 sur l'environnement GitHub Actions
+          php-version: "8.3"
+        # Installe PHP 8.3 sur l'environnement GitHub Actions
 
       - name: � Install dependencies
         run: composer install --no-dev --optimize-autoloader
