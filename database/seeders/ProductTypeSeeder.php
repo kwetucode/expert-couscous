@@ -14,29 +14,27 @@ class ProductTypeSeeder extends Seeder
     public function run(): void
     {
         // Create "Vêtements" product type (for backward compatibility)
-        $vetements = ProductType::create([
-            'name' => 'Vêtements',
-            'slug' => 'vetements',
-            'icon' => '👕',
-            'description' => 'Vêtements et accessoires de mode',
-            'has_variants' => true,
-            'has_expiry_date' => false,
-            'has_weight' => false,
-            'has_dimensions' => false,
-            'has_serial_number' => false,
-            'is_active' => true,
-            'display_order' => 1,
-        ]);
+        $vetements = ProductType::firstOrCreate(
+            ['slug' => 'vetements'],
+            [
+                'name' => 'Vêtements',
+                'icon' => '👕',
+                'description' => 'Vêtements et accessoires de mode',
+                'has_variants' => true,
+                'has_expiry_date' => false,
+                'has_weight' => false,
+                'has_dimensions' => false,
+                'has_serial_number' => false,
+                'is_active' => true,
+                'display_order' => 1,
+            ]
+        );
 
         // Create attributes for "Vêtements"
-        ProductAttribute::create([
-            'product_type_id' => $vetements->id,
+        $this->createAttribute($vetements->id, 'size', [
             'name' => 'Taille',
-            'code' => 'size',
             'type' => 'select',
             'options' => ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'],
-            'unit' => null,
-            'default_value' => null,
             'is_required' => true,
             'is_variant_attribute' => true,
             'is_filterable' => true,
@@ -44,14 +42,10 @@ class ProductTypeSeeder extends Seeder
             'display_order' => 1,
         ]);
 
-        ProductAttribute::create([
-            'product_type_id' => $vetements->id,
+        $this->createAttribute($vetements->id, 'color', [
             'name' => 'Couleur',
-            'code' => 'color',
             'type' => 'color',
             'options' => ['Noir', 'Blanc', 'Rouge', 'Bleu', 'Vert', 'Jaune', 'Rose', 'Gris', 'Marron', 'Orange'],
-            'unit' => null,
-            'default_value' => null,
             'is_required' => true,
             'is_variant_attribute' => true,
             'is_filterable' => true,
@@ -59,14 +53,10 @@ class ProductTypeSeeder extends Seeder
             'display_order' => 2,
         ]);
 
-        ProductAttribute::create([
-            'product_type_id' => $vetements->id,
+        $this->createAttribute($vetements->id, 'material', [
             'name' => 'Matière',
-            'code' => 'material',
             'type' => 'select',
             'options' => ['Coton', 'Polyester', 'Lin', 'Soie', 'Laine', 'Cuir', 'Jean', 'Viscose'],
-            'unit' => null,
-            'default_value' => null,
             'is_required' => false,
             'is_variant_attribute' => false,
             'is_filterable' => true,
@@ -74,14 +64,10 @@ class ProductTypeSeeder extends Seeder
             'display_order' => 3,
         ]);
 
-        ProductAttribute::create([
-            'product_type_id' => $vetements->id,
+        $this->createAttribute($vetements->id, 'gender', [
             'name' => 'Genre',
-            'code' => 'gender',
             'type' => 'select',
             'options' => ['Homme', 'Femme', 'Mixte', 'Enfant'],
-            'unit' => null,
-            'default_value' => null,
             'is_required' => false,
             'is_variant_attribute' => false,
             'is_filterable' => true,
@@ -90,28 +76,27 @@ class ProductTypeSeeder extends Seeder
         ]);
 
         // Create "Alimentaire" product type
-        $alimentaire = ProductType::create([
-            'name' => 'Alimentaire',
-            'slug' => 'alimentaire',
-            'icon' => '🍎',
-            'description' => 'Produits alimentaires et boissons',
-            'has_variants' => false,
-            'has_expiry_date' => true,
-            'has_weight' => true,
-            'has_dimensions' => false,
-            'has_serial_number' => false,
-            'is_active' => true,
-            'display_order' => 2,
-        ]);
+        $alimentaire = ProductType::firstOrCreate(
+            ['slug' => 'alimentaire'],
+            [
+                'name' => 'Alimentaire',
+                'icon' => '🍎',
+                'description' => 'Produits alimentaires et boissons',
+                'has_variants' => false,
+                'has_expiry_date' => true,
+                'has_weight' => true,
+                'has_dimensions' => false,
+                'has_serial_number' => false,
+                'is_active' => true,
+                'display_order' => 2,
+            ]
+        );
 
-        ProductAttribute::create([
-            'product_type_id' => $alimentaire->id,
+        $this->createAttribute($alimentaire->id, 'net_weight', [
             'name' => 'Poids Net',
-            'code' => 'net_weight',
             'type' => 'number',
             'options' => null,
             'unit' => 'g',
-            'default_value' => null,
             'is_required' => true,
             'is_variant_attribute' => false,
             'is_filterable' => false,
@@ -119,13 +104,10 @@ class ProductTypeSeeder extends Seeder
             'display_order' => 1,
         ]);
 
-        ProductAttribute::create([
-            'product_type_id' => $alimentaire->id,
+        $this->createAttribute($alimentaire->id, 'allergens', [
             'name' => 'Allergènes',
-            'code' => 'allergens',
             'type' => 'select',
             'options' => ['Gluten', 'Lactose', 'Arachides', 'Fruits à coque', 'Œufs', 'Soja', 'Poisson', 'Crustacés', 'Aucun'],
-            'unit' => null,
             'default_value' => 'Aucun',
             'is_required' => true,
             'is_variant_attribute' => false,
@@ -134,13 +116,10 @@ class ProductTypeSeeder extends Seeder
             'display_order' => 2,
         ]);
 
-        ProductAttribute::create([
-            'product_type_id' => $alimentaire->id,
+        $this->createAttribute($alimentaire->id, 'is_organic', [
             'name' => 'Bio',
-            'code' => 'is_organic',
             'type' => 'boolean',
             'options' => null,
-            'unit' => null,
             'default_value' => 'false',
             'is_required' => false,
             'is_variant_attribute' => false,
@@ -149,14 +128,10 @@ class ProductTypeSeeder extends Seeder
             'display_order' => 3,
         ]);
 
-        ProductAttribute::create([
-            'product_type_id' => $alimentaire->id,
+        $this->createAttribute($alimentaire->id, 'origin', [
             'name' => 'Origine',
-            'code' => 'origin',
             'type' => 'text',
             'options' => null,
-            'unit' => null,
-            'default_value' => null,
             'is_required' => false,
             'is_variant_attribute' => false,
             'is_filterable' => true,
@@ -165,28 +140,26 @@ class ProductTypeSeeder extends Seeder
         ]);
 
         // Create "Électronique" product type
-        $electronique = ProductType::create([
-            'name' => 'Électronique',
-            'slug' => 'electronique',
-            'icon' => '📱',
-            'description' => 'Appareils électroniques et accessoires',
-            'has_variants' => true,
-            'has_expiry_date' => false,
-            'has_weight' => false,
-            'has_dimensions' => true,
-            'has_serial_number' => true,
-            'is_active' => true,
-            'display_order' => 3,
-        ]);
+        $electronique = ProductType::firstOrCreate(
+            ['slug' => 'electronique'],
+            [
+                'name' => 'Électronique',
+                'icon' => '📱',
+                'description' => 'Appareils électroniques et accessoires',
+                'has_variants' => true,
+                'has_expiry_date' => false,
+                'has_weight' => false,
+                'has_dimensions' => true,
+                'has_serial_number' => true,
+                'is_active' => true,
+                'display_order' => 3,
+            ]
+        );
 
-        ProductAttribute::create([
-            'product_type_id' => $electronique->id,
+        $this->createAttribute($electronique->id, 'storage_capacity', [
             'name' => 'Capacité de stockage',
-            'code' => 'storage_capacity',
             'type' => 'select',
             'options' => ['16GB', '32GB', '64GB', '128GB', '256GB', '512GB', '1TB', '2TB'],
-            'unit' => null,
-            'default_value' => null,
             'is_required' => false,
             'is_variant_attribute' => true,
             'is_filterable' => true,
@@ -194,14 +167,10 @@ class ProductTypeSeeder extends Seeder
             'display_order' => 1,
         ]);
 
-        ProductAttribute::create([
-            'product_type_id' => $electronique->id,
+        $this->createAttribute($electronique->id, 'elec_color', [
             'name' => 'Couleur',
-            'code' => 'color',
             'type' => 'select',
             'options' => ['Noir', 'Blanc', 'Argent', 'Or', 'Bleu', 'Rouge', 'Vert', 'Rose'],
-            'unit' => null,
-            'default_value' => null,
             'is_required' => false,
             'is_variant_attribute' => true,
             'is_filterable' => true,
@@ -209,14 +178,10 @@ class ProductTypeSeeder extends Seeder
             'display_order' => 2,
         ]);
 
-        ProductAttribute::create([
-            'product_type_id' => $electronique->id,
+        $this->createAttribute($electronique->id, 'ram', [
             'name' => 'RAM',
-            'code' => 'ram',
             'type' => 'select',
             'options' => ['2GB', '4GB', '6GB', '8GB', '12GB', '16GB', '32GB'],
-            'unit' => null,
-            'default_value' => null,
             'is_required' => false,
             'is_variant_attribute' => true,
             'is_filterable' => true,
@@ -224,13 +189,10 @@ class ProductTypeSeeder extends Seeder
             'display_order' => 3,
         ]);
 
-        ProductAttribute::create([
-            'product_type_id' => $electronique->id,
+        $this->createAttribute($electronique->id, 'warranty', [
             'name' => 'Garantie',
-            'code' => 'warranty',
             'type' => 'select',
             'options' => ['6 mois', '1 an', '2 ans', '3 ans'],
-            'unit' => null,
             'default_value' => '1 an',
             'is_required' => true,
             'is_variant_attribute' => false,
@@ -239,13 +201,10 @@ class ProductTypeSeeder extends Seeder
             'display_order' => 4,
         ]);
 
-        ProductAttribute::create([
-            'product_type_id' => $electronique->id,
+        $this->createAttribute($electronique->id, 'voltage', [
             'name' => 'Tension d\'alimentation',
-            'code' => 'voltage',
             'type' => 'select',
             'options' => ['110V', '220V', '110-240V'],
-            'unit' => null,
             'default_value' => '220V',
             'is_required' => false,
             'is_variant_attribute' => false,
@@ -255,5 +214,22 @@ class ProductTypeSeeder extends Seeder
         ]);
 
         $this->command->info('Product types and attributes seeded successfully!');
+    }
+
+    /**
+     * Create an attribute if it doesn't exist
+     */
+    private function createAttribute(int $productTypeId, string $code, array $data): void
+    {
+        ProductAttribute::firstOrCreate(
+            [
+                'product_type_id' => $productTypeId,
+                'code' => $code,
+            ],
+            array_merge($data, [
+                'unit' => $data['unit'] ?? null,
+                'default_value' => $data['default_value'] ?? null,
+            ])
+        );
     }
 }
