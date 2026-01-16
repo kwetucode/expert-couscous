@@ -15,7 +15,7 @@ class OrganizationSwitcher extends Component
 
     public function mount(): void
     {
-        $this->currentOrganization = app('current_organization');
+        $this->currentOrganization = app()->bound('current_organization') ? app('current_organization') : null;
     }
 
     public function toggleDropdown(): void

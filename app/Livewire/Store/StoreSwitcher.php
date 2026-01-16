@@ -28,13 +28,30 @@ class StoreSwitcher extends Component
 
         // Get current user and force reload of relationships
         $user = auth()->user();
+
+        if (!$user) {
+            $this->availableStores = [];
+            return;
+        }
+
         $user->load('roles', 'stores');
+
+        // Super-admin n'a pas de stores ni d'organisation
+        if ($user->hasRole('super-admin')) {
+            $this->availableStores = [];
+            $this->currentStoreId = null;
+            return;
+        }
 
         // Get current store
         $this->currentStoreId = $user->current_store_id;
 
-        // Get current organization
-        $currentOrganization = app('current_organization');
+        // Get current organization (avec gestion d'erreur)
+        try {
+            $currentOrganization = app()->bound('current_organization') ? app('current_organization') : null;
+        } catch (\Exception $e) {
+            $currentOrganization = $user->defaultOrganization;
+        }
 
         // Get available stores for this user filtered by current organization
         if ($user->isAdmin()) {

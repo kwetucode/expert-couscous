@@ -1,8 +1,18 @@
 <div x-data="{ open: false }" @click.away="open = false" class="relative">
     @php
-        $currentOrganization = app('current_organization');
+        $currentOrganization = app()->bound('current_organization') ? app('current_organization') : null;
     @endphp
 
+    {{-- Ne pas afficher le switcher pour les super-admins --}}
+    @if(auth()->user()->hasRole('super-admin'))
+        <div class="flex items-center space-x-2 px-3 py-2 text-sm font-medium text-gray-500">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+            </svg>
+            <span class="hidden md:inline">Super Admin</span>
+        </div>
+    @else
     <!-- Current Store Button -->
     <button @click="open = !open" type="button"
         class="flex items-center space-x-2 px-3 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition">
@@ -122,4 +132,5 @@
             </div>
         @endif
     </div>
+    @endif
 </div>

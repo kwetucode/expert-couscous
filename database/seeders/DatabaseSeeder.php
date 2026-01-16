@@ -16,13 +16,9 @@ class DatabaseSeeder extends Seeder
         // Seed categories
         $this->call([
             CategorySeeder::class,
-        ]);
-
-        // User::factory(10)->create();
-
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+            RoleSeeder::class,
+            MenuItemSeeder::class,
+            ProductTypeSeeder::class,
         ]);
     }
 }

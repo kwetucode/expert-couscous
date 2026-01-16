@@ -23,6 +23,13 @@ class EnsureOrganizationAccess
             return $next($request);
         }
 
+        // Super-admin n'a pas besoin d'organisation
+        if ($user->hasRole('super-admin')) {
+            app()->instance('current_organization', null);
+            view()->share('currentOrganization', null);
+            return $next($request);
+        }
+
         // Exclure la page de paiement (vérification par URL et par nom de route)
         if (preg_match('#^organization/\d+/payment$#', $request->path()) || $request->routeIs('organization.payment')) {
             return $next($request);

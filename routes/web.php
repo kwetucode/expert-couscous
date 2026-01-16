@@ -32,6 +32,7 @@ use App\Livewire\Role\Create as RoleCreate;
 use App\Livewire\Role\Edit as RoleEdit;
 use App\Livewire\Admin\MenuPermissionManager;
 use App\Livewire\Admin\SubscriptionSettings;
+use App\Livewire\Admin\SuperAdminDashboard;
 use App\Livewire\Organization\OrganizationIndex;
 use App\Livewire\Organization\OrganizationCreate;
 use App\Livewire\Organization\OrganizationEdit;
@@ -56,6 +57,9 @@ Route::get('/', function () {
 Route::middleware(['auth'])->group(function () {
     // Dashboard - accessible to all authenticated users
     Route::get('dashboard', Dashboard::class)->name('dashboard');
+
+    // Super Admin Dashboard - accessible uniquement au super-admin
+    Route::get('/admin/dashboard', SuperAdminDashboard::class)->name('admin.dashboard')->middleware('role:super-admin');
 
     // Categories Management
     Route::prefix('categories')->name('categories.')->middleware('permission:categories.view')->group(function () {
@@ -119,8 +123,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/pos', CashRegisterModular::class)->name('pos.cash-register')->middleware('permission:sales.create');
 
     // Printer Configuration
-    Route::get('/printer-config', PrinterConfiguration::class)->name('printer.config')->middleware('permission:system.settings');
 
+    Route::get('/printer-config', PrinterConfiguration::class)->name('printer.config');
     // Stock Management
     Route::prefix('stock')->name('stock.')->middleware('permission:products.view')->group(function () {
         Route::get('/', StockIndex::class)->name('index');

@@ -134,4 +134,13 @@ class Role extends Model
     {
         return $query->where('is_active', true);
     }
+
+    /**
+     * Get the menu items that this role has access to.
+     */
+    public function menus(): BelongsToMany
+    {
+        return $this->belongsToMany(MenuItem::class, 'menu_item_role')
+            ->withTimestamps();
+    }
 }

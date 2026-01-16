@@ -21,11 +21,9 @@
                     <span class="w-3 h-3 rounded-full bg-gray-400"></span>
                     <span class="font-semibold text-gray-600">Vérification...</span>
                 </div>
-                <button wire:click="testConnection"
-                        onclick="console.log('🔵 Button TEST CONNECTION clicked')"
+                <button type="button" onclick="detectAndShowPrinters()"
                         class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition">
-                    <span wire:loading.remove wire:target="testConnection">Tester la connexion</span>
-                    <span wire:loading wire:target="testConnection">⏳ Test en cours...</span>
+                    🔍 Détecter les imprimantes
                 </button>
                 <button wire:click="testPrint"
                         onclick="console.log('🔵 Button TEST PRINT clicked')"
@@ -34,12 +32,27 @@
                     <span wire:loading wire:target="testPrint">⏳ Envoi en cours...</span>
                 </button>
             </div>
+            
+            <!-- Liste des imprimantes -->
             <div id="printer-list" class="mt-4 hidden">
-                <p class="text-sm font-semibold text-gray-700 mb-3">📌 Imprimantes détectées - Cliquez pour sélectionner :</p>
+                <div class="bg-blue-50 border-2 border-blue-200 rounded-lg p-4 mb-4">
+                    <p class="text-sm font-semibold text-blue-800 mb-1">📌 Cliquez sur une imprimante pour la sélectionner</p>
+                    <p class="text-xs text-blue-600">L'imprimante sélectionnée sera sauvegardée automatiquement</p>
+                </div>
                 <div id="printers" class="space-y-2"></div>
-                <div id="selected-printer" class="mt-4 p-3 bg-green-50 border-2 border-green-300 rounded-lg hidden">
-                    <p class="text-sm font-semibold text-green-700">✅ Imprimante sélectionnée :</p>
-                    <p id="selected-printer-name" class="text-lg font-bold text-green-900 mt-1"></p>
+            </div>
+            
+            <!-- Imprimante sélectionnée -->
+            <div id="selected-printer" class="mt-4 p-4 bg-green-50 border-2 border-green-400 rounded-lg hidden">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-semibold text-green-700">✅ Imprimante active :</p>
+                        <p id="selected-printer-name" class="text-lg font-bold text-green-900 mt-1"></p>
+                    </div>
+                    <button type="button" onclick="clearSelectedPrinter()" 
+                            class="px-3 py-1 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg text-sm font-semibold transition">
+                        ✕ Effacer
+                    </button>
                 </div>
             </div>
         </div>
@@ -274,7 +287,7 @@
             try {
                 if (typeof qz === 'undefined') {
                     statusDiv.innerHTML = '<span class="w-3 h-3 rounded-full bg-red-500"></span><span class="font-semibold text-red-600">QZ Tray non chargé</span>';
-                    return;
+                    return false;
                 }
 
                 if (!qz.websocket.isActive()) {
@@ -282,14 +295,109 @@
                 }
 
                 statusDiv.innerHTML = '<span class="w-3 h-3 rounded-full bg-green-500 animate-pulse"></span><span class="font-semibold text-green-600">Connecté</span>';
+                
+                // Afficher l'imprimante sauvegardée si elle existe
+                const savedPrinter = localStorage.getItem('thermal_printer_name');
+                if (savedPrinter) {
+                    showSelectedPrinter(savedPrinter);
+                }
+                
+                return true;
+            } catch (error) {
+                statusDiv.innerHTML = '<span class="w-3 h-3 rounded-full bg-red-500"></span><span class="font-semibold text-red-600">Déconnecté - Lancez QZ Tray</span>';
+                console.error('Erreur QZ Tray:', error);
+                return false;
+            }
+        }
 
-                // Lister les imprimantes
+        // Détecter et afficher les imprimantes
+        async function detectAndShowPrinters() {
+            const statusDiv = document.getElementById('qz-status');
+            const printerList = document.getElementById('printer-list');
+            const printersDiv = document.getElementById('printers');
+            
+            // Afficher "Recherche en cours..."
+            statusDiv.innerHTML = '<span class="w-3 h-3 rounded-full bg-yellow-500 animate-pulse"></span><span class="font-semibold text-yellow-600">Recherche en cours...</span>';
+            printersDiv.innerHTML = '<div class="text-center py-4"><span class="text-gray-500">🔄 Connexion à QZ Tray...</span></div>';
+            printerList.classList.remove('hidden');
+
+            try {
+                // Étape 1: Vérifier si QZ library est chargée
+                if (typeof qz === 'undefined') {
+                    statusDiv.innerHTML = '<span class="w-3 h-3 rounded-full bg-red-500"></span><span class="font-semibold text-red-600">QZ Tray non chargé</span>';
+                    printersDiv.innerHTML = `
+                        <div class="text-center py-4 text-red-600">
+                            <p class="font-bold">❌ La bibliothèque QZ Tray n'est pas chargée</p>
+                            <p class="mt-2">Vérifiez votre connexion internet ou <a href="https://qz.io/download/" target="_blank" class="underline font-bold">téléchargez QZ Tray ici</a></p>
+                        </div>`;
+                    return;
+                }
+                
+                console.log('✅ QZ library chargée');
+                printersDiv.innerHTML = '<div class="text-center py-4"><span class="text-gray-500">🔄 Connexion au service QZ Tray...</span></div>';
+
+                // Étape 2: Se connecter à QZ Tray
+                if (!qz.websocket.isActive()) {
+                    console.log('🔄 Tentative de connexion WebSocket à QZ Tray...');
+                    try {
+                        await qz.websocket.connect();
+                        console.log('✅ WebSocket connecté');
+                    } catch (wsError) {
+                        console.error('❌ Erreur WebSocket:', wsError);
+                        statusDiv.innerHTML = '<span class="w-3 h-3 rounded-full bg-red-500"></span><span class="font-semibold text-red-600">QZ Tray non démarré</span>';
+                        printersDiv.innerHTML = `
+                            <div class="bg-red-50 border-2 border-red-300 rounded-lg p-4 text-red-800">
+                                <p class="font-bold text-lg">❌ Impossible de se connecter à QZ Tray</p>
+                                <p class="mt-2">QZ Tray n'est probablement pas démarré.</p>
+                                <div class="mt-4 bg-white rounded p-3 text-sm">
+                                    <p class="font-bold">📋 Vérifications à faire :</p>
+                                    <ol class="list-decimal list-inside mt-2 space-y-1">
+                                        <li>Vérifiez que QZ Tray est installé</li>
+                                        <li>Cherchez l'icône <strong>QZ</strong> dans la barre des tâches (près de l'heure)</li>
+                                        <li>Si absent, lancez QZ Tray depuis le menu Démarrer</li>
+                                        <li>Si non installé: <a href="https://qz.io/download/" target="_blank" class="text-blue-600 underline font-bold">Télécharger QZ Tray</a></li>
+                                    </ol>
+                                </div>
+                            </div>`;
+                        return;
+                    }
+                } else {
+                    console.log('✅ WebSocket déjà actif');
+                }
+
+                statusDiv.innerHTML = '<span class="w-3 h-3 rounded-full bg-green-500 animate-pulse"></span><span class="font-semibold text-green-600">Connecté à QZ Tray</span>';
+                printersDiv.innerHTML = '<div class="text-center py-4"><span class="text-gray-500">🔄 Recherche des imprimantes Windows...</span></div>';
+
+                // Étape 3: Lister les imprimantes
+                console.log('🔍 Recherche des imprimantes...');
                 const printers = await qz.printers.find();
-                const printerList = document.getElementById('printer-list');
-                const printersDiv = document.getElementById('printers');
+                console.log('🖨️ Résultat qz.printers.find():', printers);
+                console.log('🖨️ Type:', typeof printers);
+                console.log('🖨️ Nombre:', printers ? printers.length : 0);
 
                 // Récupérer l'imprimante actuellement sélectionnée
                 const selectedPrinter = localStorage.getItem('thermal_printer_name');
+
+                if (!printers || printers.length === 0) {
+                    printersDiv.innerHTML = `
+                        <div class="bg-orange-50 border-2 border-orange-300 rounded-lg p-4 text-orange-800">
+                            <p class="font-bold text-lg">⚠️ Aucune imprimante détectée par QZ Tray</p>
+                            <p class="mt-2">QZ Tray est connecté mais ne voit aucune imprimante.</p>
+                            <div class="mt-4 bg-white rounded p-3 text-sm">
+                                <p class="font-bold">📋 Vérifications à faire :</p>
+                                <ol class="list-decimal list-inside mt-2 space-y-1">
+                                    <li>Ouvrez <strong>Paramètres Windows > Imprimantes</strong></li>
+                                    <li>Vérifiez que votre imprimante <strong>EPSON TM-T20II</strong> apparaît dans la liste</li>
+                                    <li>Si elle n'apparaît pas, installez les pilotes EPSON</li>
+                                    <li>Redémarrez QZ Tray après avoir ajouté l'imprimante</li>
+                                </ol>
+                            </div>
+                            <button onclick="window.open('ms-settings:printers', '_blank')" class="mt-4 px-4 py-2 bg-orange-600 text-white rounded-lg font-semibold hover:bg-orange-700">
+                                📂 Ouvrir Paramètres Imprimantes Windows
+                            </button>
+                        </div>`;
+                    return;
+                }
 
                 printersDiv.innerHTML = '';
                 printers.forEach(printer => {
@@ -311,7 +419,7 @@
                     button.type = 'button';
                     button.className = 'w-full text-left px-4 py-3 rounded-lg border-2 transition-all ' +
                         (printer === selectedPrinter
-                            ? 'bg-green-50 border-green-500 text-green-900 font-bold'
+                            ? 'bg-green-100 border-green-500 text-green-900 font-bold ring-2 ring-green-300'
                             : 'bg-gray-50 border-gray-300 text-gray-700 hover:bg-blue-50 hover:border-blue-400');
 
                     button.innerHTML = `
@@ -323,7 +431,7 @@
                                     <span class="text-xs px-2 py-1 rounded ${connectionType === 'Bluetooth' ? 'bg-blue-100 text-blue-700' : connectionType === 'Réseau' ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-700'}">
                                         ${connectionIcon} ${connectionType}
                                     </span>
-                                    ${printer === selectedPrinter ? '<span class="text-xs text-green-600 font-semibold">✓ Active</span>' : ''}
+                                    ${printer === selectedPrinter ? '<span class="text-xs bg-green-200 text-green-800 px-2 py-1 rounded font-semibold">✓ ACTIVE</span>' : '<span class="text-xs text-blue-600">Cliquez pour sélectionner</span>'}
                                 </div>
                             </div>
                         </div>
@@ -338,32 +446,48 @@
                     showSelectedPrinter(selectedPrinter);
                 }
 
-                printerList.classList.remove('hidden');
             } catch (error) {
-                statusDiv.innerHTML = '<span class="w-3 h-3 rounded-full bg-red-500"></span><span class="font-semibold text-red-600">Déconnecté</span>';
+                statusDiv.innerHTML = '<span class="w-3 h-3 rounded-full bg-red-500"></span><span class="font-semibold text-red-600">Erreur de connexion</span>';
+                printersDiv.innerHTML = `<div class="text-center py-4 text-red-600">❌ Erreur: ${error.message}<br><br>Assurez-vous que QZ Tray est démarré (icône dans la barre des tâches).</div>`;
                 console.error('Erreur QZ Tray:', error);
             }
         }
 
         // Sélectionner une imprimante
         function selectPrinter(printerName) {
+            console.log('🎯 Sélection de l\'imprimante:', printerName);
+            
             // Sauvegarder dans localStorage
             localStorage.setItem('thermal_printer_name', printerName);
+
+            // Mettre à jour le champ de formulaire
+            document.getElementById('printerName').value = printerName;
 
             // Mettre à jour l'instance thermalPrinter
             if (window.thermalPrinter) {
                 window.thermalPrinter.printerName = printerName;
-                console.log('🎯 Imprimante configurée:', printerName);
+                console.log('✅ thermalPrinter.printerName mis à jour:', window.thermalPrinter.printerName);
             }
 
             // Afficher la confirmation
             showSelectedPrinter(printerName);
 
-            // Rafraîchir la liste des imprimantes
-            checkQZConnection();
+            // Rafraîchir la liste des imprimantes pour montrer la sélection
+            detectAndShowPrinters();
+        }
 
-            // Message de succès
-            alert('✅ Imprimante sélectionnée : ' + printerName);
+        // Effacer l'imprimante sélectionnée
+        function clearSelectedPrinter() {
+            localStorage.removeItem('thermal_printer_name');
+            document.getElementById('printerName').value = '';
+            document.getElementById('selected-printer').classList.add('hidden');
+            
+            if (window.thermalPrinter) {
+                window.thermalPrinter.printerName = null;
+            }
+            
+            // Rafraîchir la liste
+            detectAndShowPrinters();
         }
 
         // Afficher l'imprimante sélectionnée
@@ -378,26 +502,24 @@
         // Événements Livewire - écoute globale immédiate
         window.addEventListener('DOMContentLoaded', () => {
             console.log('🔵 DOMContentLoaded - Setup global listeners');
-
-            // Écoute globale de tous les événements Livewire pour débogage
-            window.addEventListener('test-thermal-print', (e) => {
-                console.log('🔵 GLOBAL test-thermal-print event received (window)', e.detail);
-            });
         });
 
         document.addEventListener('livewire:init', () => {
             console.log('🔵 livewire:init event fired');
 
-            Livewire.on('test-printer-connection', () => {
-                console.log('🔵 test-printer-connection event received');
-                checkQZConnection();
-            });
-
             Livewire.on('test-thermal-print', (data) => {
                 console.log('🔵 test-thermal-print event received via Livewire.on', data);
                 console.log('🔵 window.thermalPrinter exists?', !!window.thermalPrinter);
+                console.log('🔵 localStorage thermal_printer_name:', localStorage.getItem('thermal_printer_name'));
 
                 if (window.thermalPrinter) {
+                    // S'assurer que l'imprimante est configurée depuis localStorage
+                    const savedPrinter = localStorage.getItem('thermal_printer_name');
+                    if (savedPrinter && !window.thermalPrinter.printerName) {
+                        window.thermalPrinter.printerName = savedPrinter;
+                        console.log('🔵 Imprimante chargée depuis localStorage:', savedPrinter);
+                    }
+                    
                     // Recharger la configuration de largeur papier avant l'impression
                     window.thermalPrinter.detectPaperWidth();
                     console.log('🔵 Paper width:', window.thermalPrinter.paperWidth);

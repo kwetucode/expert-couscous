@@ -147,7 +147,8 @@ class Store extends Model
         }
 
         // Si pas d'ID fourni, utiliser l'organisation courante du contexte
-        if ($organization = app('current_organization')) {
+        $organization = app()->bound('current_organization') ? app('current_organization') : null;
+        if ($organization) {
             return $query->where('organization_id', $organization->id);
         }
 

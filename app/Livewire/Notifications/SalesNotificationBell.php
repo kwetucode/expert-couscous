@@ -14,10 +14,28 @@ class SalesNotificationBell extends Component
     public int $unreadCount = 0;
     public ?int $organizationId = null;
 
+    public function getListeners(): array
+    {
+        $listeners = [
+            'refresh-sales-notifications' => 'refreshNotifications',
+        ];
+
+        // Ajouter le listener Echo seulement si organizationId est défini
+        if ($this->organizationId) {
+            $listeners["echo-private:organization.{$this->organizationId},sale.completed"] = 'onSaleCompleted';
+        }
+
+        return $listeners;
+    }
+
     public function mount(): void
     {
-        // Get current organization ID from the app container
-        $organization = app('current_organization');
+        // Get current organization ID from the app container (avec gestion d'erreur pour super-admin)
+        try {
+            $organization = app()->bound('current_organization') ? app('current_organization') : null;
+        } catch (\Exception $e) {
+            $organization = null;
+        }
         $this->organizationId = $organization?->id;
 
         $this->loadNotifications();
@@ -72,13 +90,11 @@ class SalesNotificationBell extends Component
         $this->loadNotifications();
     }
 
-    #[On('echo-private:organization.{organizationId},sale.completed')]
     public function onSaleCompleted(): void
     {
         $this->loadNotifications();
     }
 
-    #[On('refresh-sales-notifications')]
     public function refreshNotifications(): void
     {
         $this->loadNotifications();

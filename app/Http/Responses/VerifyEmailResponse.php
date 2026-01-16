@@ -18,11 +18,17 @@ class VerifyEmailResponse implements VerifyEmailResponseContract
     {
         $user = Auth::user();
 
+        // Super-admin : rediriger vers admin.dashboard
+        if ($user->hasRole('super-admin')) {
+            return redirect()->route('admin.dashboard')
+                ->with('success', 'Email vérifié avec succès ! Bienvenue sur ' . config('app.name') . ' 🎉');
+        }
+
         // Vérifier si l'utilisateur a une organisation
         $organization = $user->defaultOrganization;
 
         if (!$organization) {
-            // Normalement ne devrait pas arriver
+            // Normalement ne devrait pas arriver - rediriger vers dashboard quand même
             return redirect()->route('dashboard')
                 ->with('error', 'Aucune organisation trouvée.');
         }
@@ -42,7 +48,7 @@ class VerifyEmailResponse implements VerifyEmailResponseContract
 
         return $request->wantsJson()
             ? new JsonResponse('', 204)
-            : redirect()->intended(config('fortify.home'))
+            : redirect()->route('dashboard')
                 ->with('success', 'Email vérifié avec succès ! Bienvenue sur ' . config('app.name') . ' 🎉');
     }
 }

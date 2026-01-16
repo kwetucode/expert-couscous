@@ -31,7 +31,7 @@ class ProductService
         $this->checkProductLimit();
 
         // Get current organization
-        $currentOrganization = app('current_organization');
+        $currentOrganization = app()->bound('current_organization') ? app('current_organization') : null;
 
         // Ensure store_id is set from current user's store
         if (!isset($data['store_id']) || empty($data['store_id'])) {

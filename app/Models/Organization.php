@@ -456,7 +456,7 @@ class Organization extends Model
     public function assignOwnerRolesAndMenus(): void
     {
         $owner = $this->owner;
-        
+
         if (!$owner) {
             return;
         }
@@ -464,35 +464,42 @@ class Organization extends Model
         // Assigner les rôles admin et manager
         $owner->syncRoles(['admin', 'manager']);
 
+        // Menus réservés exclusivement au super-admin (à exclure pour les utilisateurs normaux)
+        $superAdminOnlyMenuCodes = [
+            'admin-dashboard',     // Tableau de bord Super Admin
+            'users',               // Gestion des utilisateurs
+            'users.index',         // Liste des utilisateurs
+            'users.create',        // Création utilisateur
+            'users.edit',          // Édition utilisateur
+            'roles',               // Rôles
+            'roles.index',         // Liste des rôles
+            'roles.create',        // Création rôle
+            'roles.edit',          // Édition rôle
+            'menu-permissions',    // Gestion des menus
+            'subscriptions',       // Paramètres d'abonnement
+            'organizations',       // Organisations
+            'organizations.index', // Liste des organisations
+            'organizations.create',// Création d'organisation
+        ];
+
         // Récupérer les IDs des rôles admin et manager
         $adminRole = \App\Models\Role::where('slug', 'admin')->first();
         $managerRole = \App\Models\Role::where('slug', 'manager')->first();
 
         if ($adminRole) {
-            // Récupérer tous les menus accessibles pour le rôle admin
-            $adminMenuIds = \App\Models\MenuItem::whereHas('roles', function ($query) use ($adminRole) {
-                $query->where('roles.id', $adminRole->id);
-            })->pluck('id')->toArray();
+            // Récupérer tous les menus actifs SAUF ceux réservés au super-admin
+            $accessibleMenus = \App\Models\MenuItem::active()
+                ->whereNotIn('code', $superAdminOnlyMenuCodes)
+                ->get();
 
-            // Si aucun menu n'est configuré pour admin, assigner tous les menus sauf ceux de super-admin
-            if (empty($adminMenuIds)) {
-                $superAdminRole = \App\Models\Role::where('slug', 'super-admin')->first();
-                
-                // Assigner les menus standards (tous sauf administration spécifique)
-                $allMenus = \App\Models\MenuItem::active()->get();
-                
-                foreach ($allMenus as $menu) {
-                    // Vérifier si ce menu n'est pas exclusivement pour super-admin
-                    $menuRoles = $menu->roles()->pluck('roles.slug')->toArray();
-                    
-                    // Si le menu n'a pas de rôles ou inclut admin/manager, l'ajouter
-                    if (empty($menuRoles) || in_array('admin', $menuRoles) || in_array('manager', $menuRoles)) {
-                        $menu->roles()->syncWithoutDetaching([$adminRole->id]);
-                        if ($managerRole) {
-                            $menu->roles()->syncWithoutDetaching([$managerRole->id]);
-                        }
-                    }
-                }
+            $menuIds = $accessibleMenus->pluck('id')->toArray();
+
+            // Synchroniser les menus pour le rôle admin (sans détacher les existants)
+            $adminRole->menus()->syncWithoutDetaching($menuIds);
+
+            // Synchroniser également pour le rôle manager
+            if ($managerRole) {
+                $managerRole->menus()->syncWithoutDetaching($menuIds);
             }
         }
 

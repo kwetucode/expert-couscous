@@ -23,7 +23,14 @@ class LoginResponse implements LoginResponseContract
                 ->with('info', 'Veuillez vérifier votre adresse email pour accéder à votre compte.');
         }
 
-        // 2. Vérifier si l'utilisateur a une organisation par défaut
+        // 2. Si l'utilisateur est super-admin, rediriger vers le dashboard admin
+        if ($user->hasRole('super-admin')) {
+            return $request->wantsJson()
+                ? new JsonResponse('', 204)
+                : redirect()->route('admin.dashboard');
+        }
+
+        // 3. Vérifier si l'utilisateur a une organisation par défaut
         $organization = $user->defaultOrganization;
 
         if (!$organization) {
@@ -32,14 +39,14 @@ class LoginResponse implements LoginResponseContract
                 ->with('error', 'Aucune organisation trouvée. Veuillez créer un compte.');
         }
 
-        // 3. Vérifier si l'organisation nécessite un paiement
+        // 4. Vérifier si l'organisation nécessite un paiement
         if (!$organization->isAccessible()) {
             // L'organisation a un plan payant mais n'a pas complété le paiement
             return redirect()->route('organization.payment', ['organization' => $organization->id])
                 ->with('warning', 'Veuillez compléter le paiement pour accéder à votre organisation.');
         }
 
-        // 4. Tout est OK, rediriger vers le dashboard
+        // 5. Tout est OK, rediriger vers le dashboard
         // Définir les sessions nécessaires
         session([
             'current_organization_id' => $organization->id,

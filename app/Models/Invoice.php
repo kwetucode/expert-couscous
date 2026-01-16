@@ -76,7 +76,7 @@ class Invoice extends Model
 
     /**
      * Generate a unique invoice number per store.
-     * Format: FACT-S{store_id}-{année-mois}-{séquence}
+     * Format: FACT-S{store_id}-{année-mois}-{séquence}-{random}
      */
     public static function generateInvoiceNumber(?int $storeId = null): string
     {
@@ -85,24 +85,30 @@ class Invoice extends Model
         $prefix = 'FACT-S' . $storeId . '-' . $date . '-';
         $maxAttempts = 10;
 
-        for ($attempt = 0; $attempt < $maxAttempts; $attempt++) {
-            // Récupère le MAX du numéro de séquence pour ce store
-            $maxNumber = self::where('invoice_number', 'like', $prefix . '%')
-                            ->selectRaw('MAX(CAST(SUBSTRING(invoice_number, -4) AS UNSIGNED)) as max_num')
-                            ->lockForUpdate()
-                            ->value('max_num');
+        return \DB::transaction(function () use ($prefix, $maxAttempts) {
+            for ($attempt = 0; $attempt < $maxAttempts; $attempt++) {
+                // Récupère le MAX du numéro de séquence pour ce store
+                $maxNumber = self::where('invoice_number', 'like', $prefix . '%')
+                                ->lockForUpdate()
+                                ->selectRaw('MAX(CAST(SUBSTRING_INDEX(invoice_number, "-", -1) AS UNSIGNED)) as max_num')
+                                ->value('max_num');
 
-            $nextNumber = ($maxNumber ?? 0) + 1 + $attempt;
-            $invoiceNumber = $prefix . str_pad((string) $nextNumber, 4, '0', STR_PAD_LEFT);
+                $nextNumber = ($maxNumber ?? 0) + 1 + $attempt;
+                
+                // Format: FACT-S1-2026-01-0007-ABC (ajout d'un suffixe aléatoire pour unicité)
+                $randomSuffix = strtoupper(substr(md5(uniqid((string)mt_rand(), true)), 0, 3));
+                $invoiceNumber = $prefix . str_pad((string) $nextNumber, 4, '0', STR_PAD_LEFT) . '-' . $randomSuffix;
 
-            // Vérifie que ce numéro n'existe pas
-            if (!self::where('invoice_number', $invoiceNumber)->exists()) {
-                return $invoiceNumber;
+                // Vérifie que ce numéro n'existe pas
+                if (!self::where('invoice_number', $invoiceNumber)->exists()) {
+                    return $invoiceNumber;
+                }
             }
-        }
 
-        // Fallback avec timestamp
-        return $prefix . now()->format('His') . '-' . mt_rand(100, 999);
+            // Fallback avec timestamp complet + microsecondes
+            $timestamp = now()->format('His') . substr((string)microtime(true), -4);
+            return $prefix . $timestamp . '-' . strtoupper(substr(uniqid(), -3));
+        });
     }
 
     /**

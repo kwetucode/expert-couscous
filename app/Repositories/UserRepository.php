@@ -15,7 +15,7 @@ class UserRepository
     {
         // 1. Try from app container
         try {
-            $organization = app('current_organization');
+            $organization = app()->bound('current_organization') ? app('current_organization') : null;
             if ($organization) {
                 return $organization->id;
             }

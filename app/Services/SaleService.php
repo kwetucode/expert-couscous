@@ -76,7 +76,7 @@ class SaleService
                 // Sinon depuis le contexte de l'application
                 if (!$organizationId) {
                     try {
-                        $organizationId = app('current_organization')?->id;
+                        $organizationId = app()->bound('current_organization') ? app('current_organization')?->id : null;
                     } catch (\Exception $e) {
                         // Ignorer si pas d'organisation dans le contexte
                     }
@@ -171,7 +171,7 @@ class SaleService
 
         // 4. Récupérer depuis l'organisation courante
         try {
-            $organization = app('current_organization');
+            $organization = app()->bound('current_organization') ? app('current_organization') : null;
             if ($organization) {
                 $orgStore = \App\Models\Store::where('organization_id', $organization->id)->first();
                 if ($orgStore) {
