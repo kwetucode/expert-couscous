@@ -223,7 +223,7 @@
                 <!-- Actions -->
                 <div
                     class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex items-center justify-end space-x-3 rounded-b-xl">
-                    <x-form.button type="button" @click="$dispatch('close')" variant="secondary">
+                    <x-form.button type="button" @click="showModal = false" variant="secondary">
                         Annuler
                     </x-form.button>
                     <x-form.button type="submit" variant="primary-gradient" :disabled="count($items) === 0">

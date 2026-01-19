@@ -1,4 +1,4 @@
-<div x-data="{ showCancelModal: false, transferToCancel: null, transferReference: '', showModal: false, isEditing: false }"
+<div x-data="{ showCancelModal: false, showDeleteModal: false, showApproveModal: false, transferToCancel: null, transferToDelete: null, transferToApprove: null, transferReference: '', showModal: false, isEditing: false }"
      @open-transfer-modal.window="showModal = true; isEditing = false"
      @close-transfer-modal.window="showModal = false">
     <x-slot name="header">
@@ -173,7 +173,8 @@
                                 </a>
 
                                 @if($transfer->status === 'pending')
-                                    <button wire:click="approveTransfer({{ $transfer->id }})"
+                                    <button
+                                        @click="showApproveModal = true; transferToApprove = {{ $transfer->id }}; transferReference = '{{ $transfer->reference }}'"
                                         class="p-2 text-gray-600 hover:text-green-600 hover:bg-green-50 rounded-lg transition"
                                         title="Approuver">
                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -181,9 +182,19 @@
                                                 d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                                         </svg>
                                     </button>
+
+                                    <button
+                                        @click="showDeleteModal = true; transferToDelete = {{ $transfer->id }}; transferReference = '{{ $transfer->reference }}'"
+                                        class="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
+                                        title="Supprimer">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                        </svg>
+                                    </button>
                                 @endif
 
-                                @if(in_array($transfer->status, ['pending', 'in_transit']))
+                                @if($transfer->status === 'in_transit')
                                     <button
                                         @click="showCancelModal = true; transferToCancel = {{ $transfer->id }}; transferReference = '{{ $transfer->reference }}'"
                                         class="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
@@ -233,14 +244,35 @@
         </div>
     @endif
 
-    <!-- Cancel Confirmation Modal -->
-    <x-delete-confirmation-modal title="Annuler le transfert" x-bind:show="showCancelModal"
-        @close="showCancelModal = false; transferToCancel = null" @confirm="$wire.cancelTransfer(transferToCancel)">
+    <!-- Delete Confirmation Modal (for pending transfers) -->
+    <x-delete-confirmation-modal title="Supprimer le transfert" show="showDeleteModal"
+        onConfirm="$wire.deleteTransfer(transferToDelete); showDeleteModal = false; transferToDelete = null; transferReference = ''"
+        onCancel="showDeleteModal = false; transferToDelete = null; transferReference = ''">
         <p class="text-sm text-gray-500">
-            Êtes-vous sûr de vouloir annuler le transfert <strong x-text="transferReference"></strong> ?
-            Le stock sera restauré dans le magasin source si le transfert était en transit.
+            Êtes-vous sûr de vouloir supprimer le transfert <strong x-text="transferReference"></strong> ?
+            Cette action est irréversible.
         </p>
     </x-delete-confirmation-modal>
+
+    <!-- Cancel Confirmation Modal (for in-transit transfers) -->
+    <x-delete-confirmation-modal title="Annuler le transfert" show="showCancelModal"
+        onConfirm="$wire.cancelTransfer(transferToCancel); showCancelModal = false; transferToCancel = null; transferReference = ''"
+        onCancel="showCancelModal = false; transferToCancel = null; transferReference = ''">
+        <p class="text-sm text-gray-500">
+            Êtes-vous sûr de vouloir annuler le transfert <strong x-text="transferReference"></strong> ?
+            Le stock sera restauré dans le magasin source.
+        </p>
+    </x-delete-confirmation-modal>
+
+    <!-- Approve Confirmation Modal -->
+    <x-confirmation-modal title="Approuver le transfert" show="showApproveModal" icon-color="green"
+        onConfirm="$wire.approveTransfer(transferToApprove); showApproveModal = false; transferToApprove = null; transferReference = ''"
+        onCancel="showApproveModal = false; transferToApprove = null; transferReference = ''">
+        <p class="text-sm text-gray-500">
+            Êtes-vous sûr de vouloir approuver le transfert <strong x-text="transferReference"></strong> ?
+            Le transfert passera en statut "En transit" et le stock sera réservé.
+        </p>
+    </x-confirmation-modal>
 
     <!-- Create Transfer Modal -->
     @livewire('transfer.transfer-create')

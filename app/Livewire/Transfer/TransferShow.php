@@ -85,7 +85,7 @@ class TransferShow extends Component
     public function cancelTransfer(StoreTransferService $service)
     {
         try {
-            $service->cancelTransfer($this->transferId, auth()->id());
+            $service->cancelTransfer($this->transferId, auth()->id(), 'Annulé par l\'utilisateur');
             $this->dispatch('show-toast', message: 'Transfert annulé avec succès !', type: 'success');
             $this->dispatch('transferUpdated');
 

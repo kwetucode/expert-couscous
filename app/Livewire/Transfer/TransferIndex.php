@@ -80,10 +80,34 @@ class TransferIndex extends Component
         }
 
         try {
-            $service->cancelTransfer($this->transferToDelete, auth()->id());
+            $service->cancelTransfer($this->transferToDelete, auth()->id(), 'Annulé par l\'utilisateur');
 
             $this->transferToDelete = null;
             $this->dispatch('show-toast', message: 'Transfert annulé avec succès !', type: 'success');
+            $this->resetPage();
+
+        } catch (\Exception $e) {
+            $this->dispatch('show-toast', message: 'Erreur : ' . $e->getMessage(), type: 'error');
+        }
+    }
+
+    public function deleteTransfer($transferId)
+    {
+        try {
+            $transfer = \App\Models\StoreTransfer::findOrFail($transferId);
+
+            // Vérifier que le transfert est bien en statut pending
+            if ($transfer->status !== 'pending') {
+                throw new \Exception('Seuls les transferts en attente peuvent être supprimés.');
+            }
+
+            // Supprimer les items du transfert
+            $transfer->items()->delete();
+
+            // Supprimer le transfert
+            $transfer->delete();
+
+            $this->dispatch('show-toast', message: 'Transfert supprimé avec succès !', type: 'success');
             $this->resetPage();
 
         } catch (\Exception $e) {

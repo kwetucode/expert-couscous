@@ -53,7 +53,7 @@ class TransferCreate extends Component
     public function selectVariant($variantId)
     {
         $variant = \App\Models\ProductVariant::with('product')->find($variantId);
-        
+
         if ($variant) {
             $this->selectedVariant = $variantId;
             $this->selectedVariantName = $variant->product->name . ' - ' . $variant->name;
@@ -169,9 +169,9 @@ class TransferCreate extends Component
             $service->createTransfer($data);
 
             $this->dispatch('show-toast', message: 'Transfert créé avec succès !', type: 'success');
-            $this->dispatch('transferCreated');
+            $this->dispatch('close-transfer-modal');
             $this->resetForm();
-            $this->dispatch('close-modal', 'transfer');
+            $this->dispatch('transferCreated');
 
         } catch (\Exception $e) {
             $this->dispatch('show-toast', message: 'Erreur : ' . $e->getMessage(), type: 'error');
@@ -191,7 +191,7 @@ class TransferCreate extends Component
         $variants = [];
         if ($this->searchProduct && $this->from_store_id) {
             $searchTerm = $this->searchProduct;
-            
+
             $variants = \App\Models\ProductVariant::query()
                 ->with('product')
                 ->where(function ($query) use ($searchTerm) {
@@ -214,7 +214,7 @@ class TransferCreate extends Component
 
             // Add stock quantity to each variant
             $variantIds = $variants->pluck('id')->toArray();
-            
+
             if (!empty($variantIds)) {
                 $stockData = \App\Models\StoreStock::where('store_id', $this->from_store_id)
                     ->whereIn('product_variant_id', $variantIds)
