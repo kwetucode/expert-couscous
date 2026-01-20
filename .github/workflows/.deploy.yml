@@ -19,7 +19,16 @@ jobs:
         with:
           php-version: "8.3"
         # Installe PHP 8.3 sur l'environnement GitHub Actions
-
+      - name: 📁 Create Laravel cache directories
+        run: |
+          mkdir -p bootstrap/cache
+          mkdir -p storage/framework/cache/data
+          mkdir -p storage/framework/sessions
+          mkdir -p storage/framework/views
+          mkdir -p storage/logs
+          chmod -R 775 bootstrap/cache
+          chmod -R 775 storage
+        # Crée les dossiers nécessaires pour Laravel avant l'installation
       - name: � Install dependencies
         run: composer install --no-dev --optimize-autoloader
         # Installe les dépendances PHP sans les dépendances de développement
