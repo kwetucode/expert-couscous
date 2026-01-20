@@ -129,7 +129,7 @@ Route::middleware(['auth'])->group(function () {
     // Stock Management
     Route::prefix('stock')->name('stock.')->middleware('permission:products.view')->group(function () {
         Route::get('/', StockIndex::class)->name('index');
-        Route::get('/overview', StockOverview::class)->name('overview');
+        Route::get('/overview', action: StockOverview::class)->name('overview');
         Route::get('/dashboard', StockDashboard::class)->name('dashboard');
         Route::get('/alerts', StockAlerts::class)->name('alerts');
         Route::get('/history/{variantId}', StockHistory::class)->name('history');

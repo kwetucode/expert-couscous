@@ -1,5 +1,10 @@
 @props(['variants'])
 
+@php
+    $currency = auth()->user()->defaultOrganization->currency ?? 'CDF';
+    $currentStoreId = current_store_id();
+@endphp
+
 <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
     <div class="overflow-x-auto">
         <table class="min-w-full divide-y divide-gray-200">
@@ -61,8 +66,11 @@
 
                         <!-- Stock Quantity -->
                         <td class="px-6 py-4 text-center">
-                            <span class="text-lg font-bold {{ $variant->stock_quantity > $variant->low_stock_threshold ? 'text-green-600' : ($variant->stock_quantity > 0 ? 'text-orange-600' : 'text-red-600') }}">
-                                {{ $variant->stock_quantity }}
+                            @php
+                                $storeQty = $currentStoreId !== null ? $variant->getStoreStock($currentStoreId) : $variant->stock_quantity;
+                            @endphp
+                            <span class="text-lg font-bold {{ $storeQty > $variant->low_stock_threshold ? 'text-green-600' : ($storeQty > 0 ? 'text-orange-600' : 'text-red-600') }}">
+                                {{ $storeQty }}
                             </span>
                         </td>
 
@@ -77,29 +85,35 @@
                         <!-- Unit Value -->
                         <td class="px-6 py-4 text-right">
                             <p class="text-sm font-medium text-gray-900">
-                                {{ number_format($variant->product->cost_price ?? 0, 0, ',', ' ') }} CDF
+                                {{ number_format($variant->product->cost_price ?? 0, 0, ',', ' ') }} {{ $currency }}
                             </p>
                             @if($variant->product->selling_price)
                                 <p class="text-xs text-gray-500">
-                                    PV: {{ number_format($variant->product->selling_price, 0, ',', ' ') }} CDF
+                                    PV: {{ number_format($variant->product->selling_price, 0, ',', ' ') }} {{ $currency }}
                                 </p>
                             @endif
                         </td>
 
                         <!-- Total Value -->
                         <td class="px-6 py-4 text-right">
+                            @php
+                                $storeQty = $currentStoreId !== null ? $variant->getStoreStock($currentStoreId) : $variant->stock_quantity;
+                            @endphp
                             <p class="text-sm font-bold text-gray-900">
-                                {{ number_format($variant->stock_quantity * ($variant->product->cost_price ?? 0), 0, ',', ' ') }} CDF
+                                {{ number_format($storeQty * ($variant->product->cost_price ?? 0), 0, ',', ' ') }} {{ $currency }}
                             </p>
                         </td>
 
                         <!-- Status Badge -->
                         <td class="px-6 py-4 text-center">
-                            @if($variant->stock_quantity <= 0)
+                            @php
+                                $storeQty = $currentStoreId !== null ? $variant->getStoreStock($currentStoreId) : $variant->stock_quantity;
+                            @endphp
+                            @if($storeQty <= 0)
                                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
                                     Rupture
                                 </span>
-                            @elseif($variant->isLowStock())
+                            @elseif($storeQty <= $variant->low_stock_threshold)
                                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
                                     Stock faible
                                 </span>

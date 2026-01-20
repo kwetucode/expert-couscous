@@ -1,9 +1,13 @@
 @props(['kpis'])
 
+@php
+    $currency = auth()->user()->defaultOrganization->currency ?? 'CDF';
+@endphp
+
 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
     <x-stock.kpi-card
         title="Valeur du Stock"
-        :value="number_format($kpis['total_stock_value'], 0, ',', ' ') . ' CDF'"
+        :value="number_format($kpis['total_stock_value'], 0, ',', ' ') . ' ' . $currency"
         :subtitle="number_format($kpis['total_units'], 0, ',', ' ') . ' unités'"
         color="blue">
         <x-slot:icon>
@@ -47,9 +51,9 @@
     <div class="flex items-center justify-between text-white">
         <div>
             <p class="text-sm font-medium opacity-90">Valeur de Vente Potentielle</p>
-            <p class="text-2xl font-bold mt-1">{{ number_format($kpis['total_retail_value'], 0, ',', ' ') }} CDF</p>
+            <p class="text-2xl font-bold mt-1">{{ number_format($kpis['total_retail_value'], 0, ',', ' ') }} {{ $currency }}</p>
             <p class="text-sm opacity-90 mt-1">
-                Profit potentiel : {{ number_format($kpis['potential_profit'], 0, ',', ' ') }} CDF
+                Profit potentiel : {{ number_format($kpis['potential_profit'], 0, ',', ' ') }} {{ $currency }}
                 ({{ $kpis['profit_margin_percentage'] }}%)
             </p>
         </div>

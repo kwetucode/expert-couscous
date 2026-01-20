@@ -19,37 +19,56 @@ class StockOverviewService
      */
     public function calculateKPIs(): array
     {
-        $query = $this->variantRepository->query()
-            ->with('product');
+        $currentStoreId = current_store_id();
 
-        // Filter by current store
-        if (current_store_id()) {
-            $query->whereHas('product', function($q) {
-                $q->where('store_id', current_store_id());
+        $query = $this->variantRepository->query()
+            ->with(['product', 'storeStocks']);
+
+        // Filter by current store using storeStocks relation
+        if ($currentStoreId !== null) {
+            $query->whereHas('storeStocks', function($q) use ($currentStoreId) {
+                $q->where('store_id', $currentStoreId)
+                  ->where('quantity', '>', 0);
             });
         }
 
         $allVariants = $query->get();
 
-        $inStock = $allVariants->filter(fn($v) => $v->stock_quantity > 0);
-        $outOfStock = $allVariants->filter(fn($v) => $v->stock_quantity <= 0);
-        $lowStock = $allVariants->filter(fn($v) => $v->isLowStock());
-
-        // Calculate total stock value (cost)
-        $totalStockValue = $inStock->sum(function ($variant) {
-            return $variant->stock_quantity * ($variant->product->cost_price ?? 0);
+        // Get store-specific stock quantities
+        $inStock = $allVariants->filter(function($v) use ($currentStoreId) {
+            $storeQty = $currentStoreId !== null ? $v->getStoreStock($currentStoreId) : $v->stock_quantity;
+            return $storeQty > 0;
         });
 
-        // Calculate total retail value
-        $totalRetailValue = $inStock->sum(function ($variant) {
-            return $variant->stock_quantity * ($variant->product->price ?? 0);
+        $outOfStock = $allVariants->filter(function($v) use ($currentStoreId) {
+            $storeQty = $currentStoreId !== null ? $v->getStoreStock($currentStoreId) : $v->stock_quantity;
+            return $storeQty <= 0;
+        });
+
+        $lowStock = $allVariants->filter(function($v) use ($currentStoreId) {
+            $storeQty = $currentStoreId !== null ? $v->getStoreStock($currentStoreId) : $v->stock_quantity;
+            return $storeQty > 0 && $storeQty <= $v->low_stock_threshold;
+        });
+
+        // Calculate total stock value (cost) - use store-specific quantities
+        $totalStockValue = $inStock->sum(function ($variant) use ($currentStoreId) {
+            $storeQty = $currentStoreId !== null ? $variant->getStoreStock($currentStoreId) : $variant->stock_quantity;
+            return $storeQty * ($variant->product->cost_price ?? 0);
+        });
+
+        // Calculate total retail value - use store-specific quantities
+        $totalRetailValue = $inStock->sum(function ($variant) use ($currentStoreId) {
+            $storeQty = $currentStoreId !== null ? $variant->getStoreStock($currentStoreId) : $variant->stock_quantity;
+            return $storeQty * ($variant->product->price ?? 0);
         });
 
         // Calculate potential profit
         $potentialProfit = $totalRetailValue - $totalStockValue;
 
-        // Calculate total units
-        $totalUnits = $inStock->sum('stock_quantity');
+        // Calculate total units - use store-specific quantities
+        $totalUnits = $inStock->sum(function ($variant) use ($currentStoreId) {
+            return $currentStoreId !== null ? $variant->getStoreStock($currentStoreId) : $variant->stock_quantity;
+        });
 
         return [
             'total_stock_value' => round($totalStockValue, 2),
@@ -71,13 +90,15 @@ class StockOverviewService
      */
     public function getInventoryVariants(array $filters = []): Collection
     {
-        $query = $this->variantRepository->query()
-            ->with(['product.category']);
+        $currentStoreId = current_store_id();
 
-        // Filter by current store
-        if (current_store_id()) {
-            $query->whereHas('product', function($q) {
-                $q->where('store_id', current_store_id());
+        $query = $this->variantRepository->query()
+            ->with(['product.category', 'storeStocks']);
+
+        // Filter by current store using storeStocks relation
+        if ($currentStoreId !== null) {
+            $query->whereHas('storeStocks', function($q) use ($currentStoreId) {
+                $q->where('store_id', $currentStoreId);
             });
         }
 

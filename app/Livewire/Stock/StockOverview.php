@@ -27,6 +27,11 @@ class StockOverview extends Component
     public $newQuantity = null;
     public $adjustReason = '';
 
+    protected $listeners = [
+        'storeChanged' => '$refresh',
+        'store-switched' => '$refresh',
+    ];
+
     protected $queryString = [
         'search' => ['except' => ''],
         'categoryId' => ['except' => ''],

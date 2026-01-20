@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\TransferResource;
 use App\Services\StoreTransferService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -22,16 +23,79 @@ class TransferApiController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $storeId = $request->query('store_id');
-        $status = $request->query('status');
-        $perPage = (int) $request->query('per_page', 15);
+        try {
+            $search = $request->query('search');
+            $status = $request->query('status');
+            $storeId = $request->query('store_id');
+            $fromStoreId = $request->query('from_store_id');
+            $toStoreId = $request->query('to_store_id');
+            $direction = $request->query('direction'); // 'outgoing', 'incoming', 'all'
+            $sortBy = $request->query('sort_by', 'created_at');
+            $sortDirection = $request->query('sort_direction', 'desc');
+            $perPage = (int) $request->query('per_page', 15);
 
-        // This would need to be implemented in StoreTransferRepository
-        // For now, return a basic response
-        return response()->json([
-            'success' => true,
-            'message' => 'Transfers list (implementation needed in repository)',
-        ]);
+            // Build query
+            $query = $this->transferService->getAllTransfers(
+                search: $search,
+                status: $status,
+                sortBy: $sortBy,
+                sortDirection: $sortDirection
+            );
+
+            // Apply store filters
+            if ($storeId) {
+                $query->where(function ($q) use ($storeId) {
+                    $q->where('from_store_id', $storeId)
+                        ->orWhere('to_store_id', $storeId);
+                });
+            }
+
+            if ($fromStoreId) {
+                $query->where('from_store_id', $fromStoreId);
+            }
+
+            if ($toStoreId) {
+                $query->where('to_store_id', $toStoreId);
+            }
+
+            // Apply direction filter for authenticated user's store
+            if ($direction && auth()->user()->current_store_id) {
+                $currentStoreId = auth()->user()->current_store_id;
+
+                if ($direction === 'outgoing') {
+                    $query->where('from_store_id', $currentStoreId);
+                } elseif ($direction === 'incoming') {
+                    $query->where('to_store_id', $currentStoreId);
+                } else {
+                    $query->where(function ($q) use ($currentStoreId) {
+                        $q->where('from_store_id', $currentStoreId)
+                            ->orWhere('to_store_id', $currentStoreId);
+                    });
+                }
+            }
+
+            // Paginate
+            $transfers = $query->with(['fromStore', 'toStore', 'items.variant.product', 'requester', 'approver', 'receiver', 'canceller'])
+                ->paginate($perPage);
+
+            return response()->json([
+                'success' => true,
+                'data' => TransferResource::collection($transfers),
+                'meta' => [
+                    'current_page' => $transfers->currentPage(),
+                    'last_page' => $transfers->lastPage(),
+                    'per_page' => $transfers->perPage(),
+                    'total' => $transfers->total(),
+                    'from' => $transfers->firstItem(),
+                    'to' => $transfers->lastItem(),
+                ],
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
     }
 
     /**
@@ -52,9 +116,11 @@ class TransferApiController extends Controller
                 ], 404);
             }
 
+            $transfer->load(['fromStore', 'toStore', 'items.variant.product', 'requester', 'approver', 'receiver', 'canceller']);
+
             return response()->json([
                 'success' => true,
-                'data' => $transfer->load(['fromStore', 'toStore', 'items.variant.product', 'requester', 'approver', 'receiver']),
+                'data' => new TransferResource($transfer),
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -96,11 +162,12 @@ class TransferApiController extends Controller
             $data['requested_by'] = auth()->id();
 
             $transfer = $this->transferService->createTransfer($data);
+            $transfer->load(['fromStore', 'toStore', 'items.variant.product', 'requester', 'canceller']);
 
             return response()->json([
                 'success' => true,
                 'message' => 'Transfer created successfully',
-                'data' => $transfer,
+                'data' => new TransferResource($transfer),
             ], 201);
         } catch (\Exception $e) {
             return response()->json([
@@ -120,11 +187,12 @@ class TransferApiController extends Controller
     {
         try {
             $transfer = $this->transferService->approveTransfer($id, auth()->id());
+            $transfer->load(['fromStore', 'toStore', 'items.variant.product', 'requester', 'approver', 'canceller']);
 
             return response()->json([
                 'success' => true,
                 'message' => 'Transfer approved successfully',
-                'data' => $transfer,
+                'data' => new TransferResource($transfer),
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -164,11 +232,12 @@ class TransferApiController extends Controller
                 auth()->id(),
                 $request->notes
             );
+            $transfer->load(['fromStore', 'toStore', 'items.variant.product', 'requester', 'approver', 'receiver', 'canceller']);
 
             return response()->json([
                 'success' => true,
                 'message' => 'Transfer received successfully',
-                'data' => $transfer,
+                'data' => new TransferResource($transfer),
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -201,11 +270,12 @@ class TransferApiController extends Controller
 
         try {
             $transfer = $this->transferService->cancelTransfer($id, auth()->id(), $request->reason);
+            $transfer->load(['fromStore', 'toStore', 'items.variant.product', 'requester', 'approver', 'canceller']);
 
             return response()->json([
                 'success' => true,
                 'message' => 'Transfer cancelled successfully',
-                'data' => $transfer,
+                'data' => new TransferResource($transfer),
             ]);
         } catch (\Exception $e) {
             return response()->json([

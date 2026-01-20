@@ -151,17 +151,17 @@
 
             /* Sidebar collapsed state */
             #sidebar.collapsed {
-                width: 80px;
+                width: 80px !important;
             }
             #sidebar.collapsed .sidebar-text {
-                display: none;
+                display: none !important;
             }
             #sidebar.collapsed .sidebar-logo span.sidebar-text {
-                display: none;
+                display: none !important;
             }
             /* Hide dropdowns in collapsed state */
             #sidebar.collapsed [data-dropdown-container] .dropdown-content {
-                display: none;
+                display: none !important;
             }
 
             /* Tooltip - hidden by default */
@@ -189,55 +189,68 @@
     @endpush
     @push('scripts')
         <script>
-            // Sidebar toggle for mobile
-            const sidebar = document.getElementById('sidebar');
-            const sidebarOverlay = document.getElementById('sidebarOverlay');
-            const openSidebar = document.getElementById('openSidebar');
-            const closeSidebar = document.getElementById('closeSidebar');
-            const collapseSidebar = document.getElementById('collapseSidebar');
-            const collapseIcon = document.getElementById('collapseIcon');
+            // Wrap all sidebar functionality in DOMContentLoaded
+            document.addEventListener('DOMContentLoaded', function() {
+                // Sidebar toggle for mobile
+                const sidebar = document.getElementById('sidebar');
+                const sidebarOverlay = document.getElementById('sidebarOverlay');
+                const openSidebar = document.getElementById('openSidebar');
+                const closeSidebar = document.getElementById('closeSidebar');
+                const collapseSidebar = document.getElementById('collapseSidebar');
+                const collapseIcon = document.getElementById('collapseIcon');
 
-            // Load saved state
-            if (sidebar && collapseSidebar && collapseIcon) {
-                const savedCollapsedState = localStorage.getItem('sidebar-collapsed');
-                if (savedCollapsedState === 'true') {
-                    sidebar.classList.add('collapsed');
-                    collapseIcon.style.transform = 'rotate(180deg)';
+                // Load saved state
+                if (sidebar && collapseSidebar && collapseIcon) {
+                    console.log('Sidebar collapse initialized');
+                    const savedCollapsedState = localStorage.getItem('sidebar-collapsed');
+                    if (savedCollapsedState === 'true') {
+                        sidebar.classList.add('collapsed');
+                        collapseIcon.style.transform = 'rotate(180deg)';
+                    }
+
+                    // Desktop collapse toggle
+                    collapseSidebar.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log('Collapse button clicked');
+
+                        sidebar.classList.toggle('collapsed');
+                        const isCollapsed = sidebar.classList.contains('collapsed');
+                        console.log('Sidebar collapsed state:', isCollapsed);
+
+                        // Rotate icon
+                        collapseIcon.style.transform = isCollapsed ? 'rotate(180deg)' : 'rotate(0deg)';
+
+                        // Save state
+                        localStorage.setItem('sidebar-collapsed', isCollapsed);
+                    });
+                } else {
+                    console.error('Sidebar elements not found:', {
+                        sidebar: !!sidebar,
+                        collapseSidebar: !!collapseSidebar,
+                        collapseIcon: !!collapseIcon
+                    });
                 }
 
-                // Desktop collapse toggle
-                collapseSidebar.addEventListener('click', () => {
-                    sidebar.classList.toggle('collapsed');
-                    const isCollapsed = sidebar.classList.contains('collapsed');
-
-                    // Rotate icon
-                    collapseIcon.style.transform = isCollapsed ? 'rotate(180deg)' : 'rotate(0deg)';
-
-                    // Save state
-                    localStorage.setItem('sidebar-collapsed', isCollapsed);
+                // Mobile open
+                openSidebar?.addEventListener('click', () => {
+                    sidebar.classList.remove('-translate-x-full');
+                    sidebarOverlay.classList.remove('hidden');
                 });
-            }
 
-            // Mobile open
-            openSidebar?.addEventListener('click', () => {
-                sidebar.classList.remove('-translate-x-full');
-                sidebarOverlay.classList.remove('hidden');
-            });
+                // Mobile close
+                closeSidebar?.addEventListener('click', () => {
+                    sidebar.classList.add('-translate-x-full');
+                    sidebarOverlay.classList.add('hidden');
+                });
 
-            // Mobile close
-            closeSidebar?.addEventListener('click', () => {
-                sidebar.classList.add('-translate-x-full');
-                sidebarOverlay.classList.add('hidden');
-            });
+                // Overlay close
+                sidebarOverlay?.addEventListener('click', () => {
+                    sidebar.classList.add('-translate-x-full');
+                    sidebarOverlay.classList.add('hidden');
+                });
 
-            // Overlay close
-            sidebarOverlay?.addEventListener('click', () => {
-                sidebar.classList.add('-translate-x-full');
-                sidebarOverlay.classList.add('hidden');
-            });
-
-            // Dropdown Menu Functionality
-            document.addEventListener('DOMContentLoaded', function() {
+                // Dropdown Menu Functionality
                 // Initialize all dropdown toggles
                 const dropdownToggles = document.querySelectorAll('[data-dropdown-toggle]');
 

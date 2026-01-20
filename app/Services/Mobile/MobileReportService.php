@@ -53,7 +53,9 @@ class MobileReportService
      */
     public function getUserContext(User $user): array
     {
-        $currentStore = current_store();
+        // Use effective_store_id() which takes into account request store_id parameter
+        $effectiveStoreId = effective_store_id();
+        $currentStore = $effectiveStoreId ? \App\Models\Store::find($effectiveStoreId) : null;
         $organization = $user->defaultOrganization;
 
         return [
@@ -262,19 +264,24 @@ class MobileReportService
         $cacheKey = $this->getCacheKey('low_stock', $user);
 
         return Cache::remember($cacheKey, 300, function () use ($limit) {
+            $storeId = effective_store_id();
             $products = $this->dashboardRepository->getLowStockProducts($limit);
 
-            return $products->map(fn($variant) => [
-                'id' => $variant->id,
-                'product_id' => $variant->product_id,
-                'product_name' => $variant->product->name ?? 'N/A',
-                'variant_name' => $variant->full_name ?? $variant->sku,
-                'sku' => $variant->sku,
-                'current_stock' => $variant->stock_quantity,
-                'threshold' => $variant->low_stock_threshold,
-                'status' => 'low_stock',
-                'severity' => 'warning',
-            ])->toArray();
+            return $products->map(function($variant) use ($storeId) {
+                $currentStock = $storeId !== null ? $variant->getStoreStock($storeId) : $variant->stock_quantity;
+
+                return [
+                    'id' => $variant->id,
+                    'product_id' => $variant->product_id,
+                    'product_name' => $variant->product->name ?? 'N/A',
+                    'variant_name' => $variant->full_name ?? $variant->sku,
+                    'sku' => $variant->sku,
+                    'current_stock' => $currentStock,
+                    'threshold' => $variant->low_stock_threshold,
+                    'status' => 'low_stock',
+                    'severity' => 'warning',
+                ];
+            })->values()->toArray();
         });
     }
 
@@ -297,7 +304,7 @@ class MobileReportService
                 'current_stock' => 0,
                 'status' => 'out_of_stock',
                 'severity' => 'critical',
-            ])->toArray();
+            ])->values()->toArray();
         });
     }
 

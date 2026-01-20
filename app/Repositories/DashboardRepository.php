@@ -37,7 +37,8 @@ class DashboardRepository
         $storeId = effective_store_id();
 
         if ($storeId) {
-            $query->whereHas('product', function($q) use ($storeId) {
+            // Use storeStocks relation instead of product.store_id
+            $query->whereHas('storeStocks', function($q) use ($storeId) {
                 $q->where('store_id', $storeId);
             });
         }
@@ -244,18 +245,28 @@ class DashboardRepository
      */
     public function getLowStockProducts(int $limit = null): \Illuminate\Database\Eloquent\Collection
     {
-        $query = ProductVariant::with('product')
-            ->whereRaw('stock_quantity <= low_stock_threshold')
-            ->where('stock_quantity', '>', 0);
+        $storeId = effective_store_id();
+
+        $query = ProductVariant::with(['product', 'storeStocks']);
         $this->applyStoreFilterViaProduct($query);
 
         $query->orderBy('stock_quantity', 'asc');
 
+        // Don't limit here, filter first then limit
+        $variants = $query->get();
+
+        // Filter by store-specific stock quantities
+        $filtered = $variants->filter(function($variant) use ($storeId) {
+            $storeQty = $storeId !== null ? $variant->getStoreStock($storeId) : $variant->stock_quantity;
+            return $storeQty > 0 && $storeQty <= $variant->low_stock_threshold;
+        });
+
+        // Apply limit after filtering
         if ($limit) {
-            $query->limit($limit);
+            return $filtered->take($limit);
         }
 
-        return $query->get();
+        return $filtered;
     }
 
     /**
@@ -263,16 +274,27 @@ class DashboardRepository
      */
     public function getOutOfStockProducts(int $limit = null): \Illuminate\Database\Eloquent\Collection
     {
-        $query = ProductVariant::with('product')
-            ->where('stock_quantity', 0);
+        $storeId = effective_store_id();
+
+        $query = ProductVariant::with(['product', 'storeStocks']);
         $this->applyStoreFilterViaProduct($query);
 
         $query->orderBy('updated_at', 'desc');
 
+        // Don't limit here, filter first then limit
+        $variants = $query->get();
+
+        // Filter by store-specific stock quantities
+        $filtered = $variants->filter(function($variant) use ($storeId) {
+            $storeQty = $storeId !== null ? $variant->getStoreStock($storeId) : $variant->stock_quantity;
+            return $storeQty <= 0;
+        });
+
+        // Apply limit after filtering
         if ($limit) {
-            $query->limit($limit);
+            return $filtered->take($limit);
         }
 
-        return $query->get();
+        return $filtered;
     }
 }

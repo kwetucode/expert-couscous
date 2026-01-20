@@ -101,16 +101,46 @@ class MobileDashboardController extends Controller
     /**
      * Changer de store actif
      *
-     * POST /api/mobile/switch-store/{storeId}
+     * POST /api/mobile/switch-store/{storeId?}
+     * storeId peut être null pour voir tous les magasins (admin/manager uniquement)
      */
-    public function switchStore(Request $request, int $storeId): JsonResponse
+    public function switchStore(Request $request, ?string $storeId = null): JsonResponse
     {
         try {
             $user = Auth::user();
 
+            // Si storeId est "null" ou vide, c'est pour voir tous les stores
+            if ($storeId === 'null' || $storeId === '' || $storeId === null) {
+                // Vérifier que l'utilisateur est admin/manager
+                if (!user_can_access_all_stores()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Vous n\'avez pas les droits pour voir tous les magasins',
+                    ], 403);
+                }
+
+                // Mettre à null pour voir tous les stores
+                $user->update(['current_store_id' => null]);
+
+                // Invalider le cache
+                $this->reportService->invalidateCache($user);
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Affichage de tous les magasins',
+                    'data' => [
+                        'current_store_id' => null,
+                        'context' => $this->reportService->getUserContext($user->fresh()),
+                    ],
+                ]);
+            }
+
+            // Convertir en int pour un store spécifique
+            $storeIdInt = (int) $storeId;
+
             // Vérifier que l'utilisateur a accès à ce store
             $accessibleStores = collect($this->reportService->getAccessibleStores($user));
-            $hasAccess = $accessibleStores->contains('id', $storeId);
+            $hasAccess = $accessibleStores->contains('id', $storeIdInt);
 
             if (!$hasAccess) {
                 return response()->json([
@@ -120,7 +150,7 @@ class MobileDashboardController extends Controller
             }
 
             // Mettre à jour le store courant de l'utilisateur
-            $user->update(['current_store_id' => $storeId]);
+            $user->update(['current_store_id' => $storeIdInt]);
 
             // Invalider le cache
             $this->reportService->invalidateCache($user);
@@ -129,7 +159,7 @@ class MobileDashboardController extends Controller
                 'success' => true,
                 'message' => 'Magasin changé avec succès',
                 'data' => [
-                    'current_store_id' => $storeId,
+                    'current_store_id' => $storeIdInt,
                     'context' => $this->reportService->getUserContext($user->fresh()),
                 ],
             ]);

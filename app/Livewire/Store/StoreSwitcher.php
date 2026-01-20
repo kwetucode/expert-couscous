@@ -106,11 +106,12 @@ class StoreSwitcher extends Component
             $this->showDropdown = false;
 
             $message = $storeId === null ? 'Affichage de tous les magasins' : 'Magasin changé avec succès !';
-            $this->dispatch('show-toast', message: $message, type: 'success');
-            $this->dispatch('store-switched', storeId: $storeId)->self();
 
-            // Reload the entire page to refresh all data
-            $this->js('window.location.reload()');
+            // Dispatch event before reload
+            $this->dispatch('storeChanged', storeId: $storeId);
+
+            // Force page reload to refresh all data
+            return redirect(request()->header('Referer') ?? route('dashboard'));
 
         } catch (\Exception $e) {
             $this->dispatch('show-toast', message: 'Erreur : ' . $e->getMessage(), type: 'error');

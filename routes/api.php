@@ -78,23 +78,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/{id}/stock', [StoreApiController::class, 'stock'])->name('stock');
     });
 
-    // ===== Transfer API Routes =====
-    Route::prefix('transfers')->name('api.transfers.')->group(function () {
 
-        // List and filter transfers
-        Route::get('/', [TransferApiController::class, 'index'])->name('index');
-
-        // Show specific transfer
-        Route::get('/{id}', [TransferApiController::class, 'show'])->name('show');
-
-        // Create transfer
-        Route::post('/', [TransferApiController::class, 'store'])->name('store');
-
-        // Transfer actions
-        Route::post('/{id}/approve', [TransferApiController::class, 'approve'])->name('approve');
-        Route::post('/{id}/receive', [TransferApiController::class, 'receive'])->name('receive');
-        Route::post('/{id}/cancel', [TransferApiController::class, 'cancel'])->name('cancel');
-    });
 
     // ===== Mobile API Routes =====
     Route::prefix('mobile')->name('api.mobile.')->group(function () {
@@ -108,8 +92,8 @@ Route::middleware('auth:sanctum')->group(function () {
         // Stores accessibles
         Route::get('/stores', [MobileDashboardController::class, 'stores'])->name('stores');
 
-        // Changer de store actif
-        Route::post('/switch-store/{storeId}', [MobileDashboardController::class, 'switchStore'])->name('switch-store');
+        // Changer de store actif (storeId peut être null pour voir tous les magasins)
+        Route::post('/switch-store/{storeId?}', [MobileDashboardController::class, 'switchStore'])->name('switch-store');
 
         // Performance des stores (admin/manager)
         Route::get('/stores-performance', [MobileDashboardController::class, 'storesPerformance'])->name('stores-performance');
@@ -194,7 +178,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::prefix('checkout')->name('checkout.')->group(function () {
             // Valider le panier avant checkout
             Route::post('/validate', [\App\Http\Controllers\Api\Mobile\MobileSalesController::class, 'validateCart'])->name('validate');
-            
+
             // Créer une vente (facturation)
             Route::post('/', [\App\Http\Controllers\Api\Mobile\MobileSalesController::class, 'checkout'])->name('create');
         });
@@ -203,12 +187,30 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::prefix('sales')->name('sales.')->group(function () {
             // Liste des ventes
             Route::get('/', [\App\Http\Controllers\Api\Mobile\MobileSalesController::class, 'salesHistory'])->name('history');
-            
+
             // Détail d'une vente
             Route::get('/{id}', [\App\Http\Controllers\Api\Mobile\MobileSalesController::class, 'saleDetail'])->name('detail');
         });
 
         // ===== Rapports et Statistiques =====
         Route::get('/reports', [\App\Http\Controllers\Api\Mobile\ReportController::class, 'index'])->name('reports');
-    });
+
+        // ===== Transfer API Routes =====
+        Route::prefix('transfers')->name('api.transfers.')->group(function () {
+
+            // List and filter transfers
+            Route::get('/', [TransferApiController::class, 'index'])->name('index');
+
+            // Show specific transfer
+            Route::get('/{id}', [TransferApiController::class, 'show'])->name('show');
+
+            // Create transfer
+            Route::post('/', [TransferApiController::class, 'store'])->name('store');
+
+            // Transfer actions
+            Route::post('/{id}/approve', [TransferApiController::class, 'approve'])->name('approve');
+            Route::post('/{id}/receive', [TransferApiController::class, 'receive'])->name('receive');
+            Route::post('/{id}/cancel', [TransferApiController::class, 'cancel'])->name('cancel');
+        });
+        });
 });
