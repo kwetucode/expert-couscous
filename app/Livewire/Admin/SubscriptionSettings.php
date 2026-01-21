@@ -4,6 +4,7 @@ namespace App\Livewire\Admin;
 
 use App\Models\SubscriptionPayment;
 use App\Models\SubscriptionPlan;
+use App\Services\SubscriptionService;
 use Livewire\Component;
 use Illuminate\Support\Facades\Cache;
 
@@ -138,7 +139,7 @@ class SubscriptionSettings extends Component
 
     public function render()
     {
-        $plans = SubscriptionPlan::active()->ordered()->get();
+        $plans = SubscriptionService::getPlansFromDatabase();
 
         return view('livewire.admin.subscription-settings', [
             'plans' => $plans,

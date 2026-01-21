@@ -64,6 +64,7 @@ class SubscriptionService
         $plans = [];
         foreach ($plansFromDb as $plan) {
             $plans[$plan->slug] = [
+                'id' => $plan->id,
                 'name' => $plan->name,
                 'slug' => $plan->slug,
                 'price' => $plan->price,
@@ -125,6 +126,7 @@ class SubscriptionService
     {
         return [
             'free' => [
+                'id' => null, // ID null pour les plans par défaut
                 'name' => 'Gratuit',
                 'slug' => 'free',
                 'price' => 0,
@@ -142,6 +144,7 @@ class SubscriptionService
                 'color' => 'gray',
             ],
             'starter' => [
+                'id' => null,
                 'name' => 'Starter',
                 'slug' => 'starter',
                 'price' => 9900,
@@ -160,6 +163,7 @@ class SubscriptionService
                 'color' => 'blue',
             ],
             'professional' => [
+                'id' => null,
                 'name' => 'Professionnel',
                 'slug' => 'professional',
                 'price' => 24900,
@@ -179,6 +183,7 @@ class SubscriptionService
                 'color' => 'purple',
             ],
             'enterprise' => [
+                'id' => null,
                 'name' => 'Entreprise',
                 'slug' => 'enterprise',
                 'price' => 49900,

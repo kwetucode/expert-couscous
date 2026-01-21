@@ -130,11 +130,11 @@
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 @foreach($plans as $plan)
                     <div class="relative bg-white border-2 rounded-xl p-5 transition-all hover:shadow-lg
-                        @if($plan->is_popular) border-indigo-500 ring-2 ring-indigo-100
+                        @if($plan['is_popular']) border-indigo-500 ring-2 ring-indigo-100
                         @else border-gray-200 hover:border-indigo-300
                         @endif">
 
-                        @if($plan->is_popular)
+                        @if($plan['is_popular'])
                             <div class="absolute -top-3 left-1/2 transform -translate-x-1/2">
                                 <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md">
                                     ⭐ Populaire
@@ -143,10 +143,10 @@
                         @endif
 
                         <div class="text-center mb-4 pt-2">
-                            <h4 class="text-lg font-bold text-gray-900">{{ $plan->name }}</h4>
+                            <h4 class="text-lg font-bold text-gray-900">{{ $plan['name'] }}</h4>
                             <div class="mt-2">
                                 <span class="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-                                    {{ number_format($plan->price, 0, ',', ' ') }}
+                                    {{ number_format($plan['price'], 0, ',', ' ') }}
                                 </span>
                                 <span class="text-sm text-gray-500">{{ $currency }}/mois</span>
                             </div>
@@ -155,25 +155,23 @@
                         <div class="space-y-2 text-sm mb-4 bg-gray-50 rounded-lg p-3">
                             <div class="flex justify-between">
                                 <span class="text-gray-500">Magasins</span>
-                                <span class="font-semibold text-gray-900">{{ $plan->max_stores }}</span>
+                                <span class="font-semibold text-gray-900">{{ $plan['max_stores'] }}</span>
                             </div>
                             <div class="flex justify-between">
                                 <span class="text-gray-500">Utilisateurs</span>
-                                <span class="font-semibold text-gray-900">{{ $plan->max_users }}</span>
+                                <span class="font-semibold text-gray-900">{{ $plan['max_users'] }}</span>
                             </div>
                             <div class="flex justify-between">
                                 <span class="text-gray-500">Produits</span>
-                                <span class="font-semibold text-gray-900">{{ number_format($plan->max_products, 0, ',', ' ') }}</span>
+                                <span class="font-semibold text-gray-900">{{ number_format($plan['max_products'], 0, ',', ' ') }}</span>
                             </div>
                         </div>
 
                         <div class="flex space-x-2">
-                            <button wire:click="openEditModal({{ $plan->id }})"
-                                class="flex-1 px-3 py-2.5 text-sm font-semibold bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-xl transition-all shadow-md hover:shadow-lg">
+                            <button wire:click="openEditModal({{ $plan['id'] }})" class="flex-1 px-3 py-2.5 text-sm font-semibold bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-xl transition-all shadow-md hover:shadow-lg">
                                 Modifier
                             </button>
-                            <button wire:click="togglePopular({{ $plan->id }})"
-                                class="px-3 py-2.5 text-sm border-2 border-gray-200 hover:border-amber-400 hover:bg-amber-50 rounded-xl transition-all"
+                            <button wire:click="togglePopular({{ $plan['id'] }})" class="px-3 py-2.5 text-sm border-2 border-gray-200 hover:border-amber-400 hover:bg-amber-50 rounded-xl transition-all"
                                 title="Marquer comme populaire">
                                 ⭐
                             </button>
