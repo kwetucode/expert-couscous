@@ -4,7 +4,6 @@ namespace App\Livewire\Admin;
 
 use App\Models\SubscriptionPayment;
 use App\Models\SubscriptionPlan;
-use App\Services\SubscriptionService;
 use Livewire\Component;
 use Illuminate\Support\Facades\Cache;
 
@@ -21,16 +20,7 @@ class SubscriptionSettings extends Component
         'max_products' => 100,
         'features' => [],
     ];
-
-    // Discount settings
-    public array $discounts = [
-        '3_months' => 5,
-        '6_months' => 10,
-        '12_months' => 20,
-    ];
-
-    // General settings
-    public int $trialDays = 14;
+    
     public string $currency = 'CDF';
 
     public function mount(): void
@@ -41,44 +31,13 @@ class SubscriptionSettings extends Component
 
     public function loadSettings(): void
     {
-        // Charger les paramètres depuis le cache ou utiliser les valeurs par défaut
-        $cachedDiscounts = Cache::get('subscription_discounts');
-        $this->discounts = $cachedDiscounts ? $this->ensureArray($cachedDiscounts) : [
-            '3_months' => 5,
-            '6_months' => 10,
-            '12_months' => 20,
-        ];
-
-        $this->trialDays = (int) Cache::get('subscription_trial_days', 14);
         $this->currency = Cache::get('subscription_currency', 'CDF') ?: 'CDF';
-    }
-
-    /**
-     * Convertit récursivement un objet/array en array PHP natif
-     */
-    protected function ensureArray(mixed $data): array
-    {
-        if (is_object($data)) {
-            $data = (array) $data;
-        }
-
-        if (!is_array($data)) {
-            return [];
-        }
-
-        foreach ($data as $key => $value) {
-            if (is_object($value) || is_array($value)) {
-                $data[$key] = $this->ensureArray($value);
-            }
-        }
-
-        return $data;
     }
 
     public function openEditModal(int $planId): void
     {
         $plan = SubscriptionPlan::findOrFail($planId);
-
+        
         $this->editingPlanId = $planId;
         $this->editForm = [
             'name' => $plan->name,
@@ -131,40 +90,15 @@ class SubscriptionSettings extends Component
         $this->dispatch('show-toast', message: 'Plan mis à jour avec succès !', type: 'success');
     }
 
-    public function saveDiscounts(): void
-    {
-        $this->validate([
-            'discounts.3_months' => 'required|numeric|min:0|max:100',
-            'discounts.6_months' => 'required|numeric|min:0|max:100',
-            'discounts.12_months' => 'required|numeric|min:0|max:100',
-        ]);
-
-        Cache::forever('subscription_discounts', $this->discounts);
-        $this->dispatch('show-toast', message: 'Réductions mises à jour !', type: 'success');
-    }
-
-    public function saveGeneralSettings(): void
-    {
-        $this->validate([
-            'trialDays' => 'required|integer|min:0|max:90',
-            'currency' => 'required|string|size:3',
-        ]);
-
-        Cache::forever('subscription_trial_days', $this->trialDays);
-        Cache::forever('subscription_currency', $this->currency);
-
-        $this->dispatch('show-toast', message: 'Paramètres généraux mis à jour !', type: 'success');
-    }
-
     public function togglePopular(int $planId): void
     {
         // Désactiver "populaire" sur tous les plans
         SubscriptionPlan::query()->update(['is_popular' => false]);
-
+        
         // Activer sur le plan sélectionné
         $plan = SubscriptionPlan::findOrFail($planId);
         $plan->update(['is_popular' => !$plan->is_popular]);
-
+        
         $this->dispatch('show-toast', message: 'Plan mis en avant !', type: 'success');
     }
 
@@ -172,17 +106,8 @@ class SubscriptionSettings extends Component
     {
         // Réexécuter le seeder pour réinitialiser les plans
         \Artisan::call('db:seed', ['--class' => 'SubscriptionPlanSeeder']);
-
-        $this->discounts = [
-            '3_months' => 5,
-            '6_months' => 10,
-            '12_months' => 20,
-        ];
-        $this->trialDays = 14;
+        
         $this->currency = 'CDF';
-
-        Cache::forget('subscription_discounts');
-        Cache::forget('subscription_trial_days');
         Cache::forget('subscription_currency');
 
         $this->dispatch('show-toast', message: 'Paramètres réinitialisés !', type: 'success');
@@ -221,7 +146,7 @@ class SubscriptionSettings extends Component
     public function render()
     {
         $plans = SubscriptionPlan::active()->ordered()->get();
-
+        
         return view('livewire.admin.subscription-settings', [
             'plans' => $plans,
             'stats' => $this->stats,
