@@ -948,7 +948,7 @@ class SubscriptionService
     public static function updatePlan(int $planId, array $data): bool
     {
         $plan = SubscriptionPlan::findOrFail($planId);
-        
+
         return $plan->update($data);
     }
 

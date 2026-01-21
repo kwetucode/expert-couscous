@@ -3,6 +3,7 @@
 namespace App\Livewire\Admin;
 
 use App\Services\SubscriptionService;
+use Illuminate\Support\Facades\Artisan;
 use Livewire\Component;
 use Illuminate\Support\Facades\Cache;
 
@@ -94,7 +95,7 @@ class SubscriptionSettings extends Component
     public function resetToDefaults(): void
     {
         // Réexécuter le seeder pour réinitialiser les plans
-        \Artisan::call('db:seed', ['--class' => 'SubscriptionPlanSeeder']);
+        Artisan::call('db:seed', ['--class' => 'SubscriptionPlanSeeder']);
 
         $this->currency = 'CDF';
         Cache::forget('subscription_currency');

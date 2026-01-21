@@ -81,7 +81,10 @@
                     <div>
                         <p class="text-sm text-gray-500 font-medium">Plans payants</p>
                         <p class="text-2xl font-bold text-purple-600">
-                            {{ ($stats['by_plan']['starter'] ?? 0) + ($stats['by_plan']['professional'] ?? 0) + ($stats['by_plan']['enterprise'] ?? 0) }}
+                            @php
+                                $paidPlansCount = collect($stats['by_plan'])->except('free')->sum();
+                            @endphp
+                            {{ $paidPlansCount }}
                         </p>
                     </div>
                 </div>
@@ -100,17 +103,22 @@
                 <h3 class="text-lg font-bold text-gray-900">Distribution par plan</h3>
             </div>
             <div class="grid grid-cols-4 gap-4">
-                @foreach(['free' => 'Gratuit', 'starter' => 'Starter', 'professional' => 'Pro', 'enterprise' => 'Enterprise'] as $key => $label)
+                @foreach($plans as $slug => $plan)
+                    @php
+                        $colorClass = match($plan['color']) {
+                            'gray' => 'text-gray-600',
+                            'blue' => 'text-blue-600',
+                            'purple' => 'text-purple-600',
+                            'amber' => 'text-amber-600',
+                            'indigo' => 'text-indigo-600',
+                            default => 'text-indigo-600'
+                        };
+                    @endphp
                     <div class="text-center p-4 rounded-xl bg-white border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
-                        <p class="text-3xl font-bold
-                            @if($key === 'free') text-gray-600
-                            @elseif($key === 'starter') text-blue-600
-                            @elseif($key === 'professional') text-purple-600
-                            @else text-amber-600
-                            @endif">
-                            {{ $stats['by_plan'][$key] ?? 0 }}
+                        <p class="text-3xl font-bold {{ $colorClass }}">
+                            {{ $stats['by_plan'][$slug] ?? 0 }}
                         </p>
-                        <p class="text-sm text-gray-500 font-medium mt-1">{{ $label }}</p>
+                        <p class="text-sm text-gray-500 font-medium mt-1">{{ $plan['name'] }}</p>
                     </div>
                 @endforeach
             </div>
