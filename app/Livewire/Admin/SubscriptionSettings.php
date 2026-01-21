@@ -21,7 +21,7 @@ class SubscriptionSettings extends Component
         'max_products' => 100,
         'features' => [],
     ];
-    
+
     // Discount settings
     public array $discounts = [
         '3_months' => 5,
@@ -48,7 +48,7 @@ class SubscriptionSettings extends Component
             '6_months' => 10,
             '12_months' => 20,
         ];
-        
+
         $this->trialDays = (int) Cache::get('subscription_trial_days', 14);
         $this->currency = Cache::get('subscription_currency', 'CDF') ?: 'CDF';
     }
@@ -61,27 +61,28 @@ class SubscriptionSettings extends Component
         if (is_object($data)) {
             $data = (array) $data;
         }
-        
+
         if (!is_array($data)) {
             return [];
         }
-        
+
         foreach ($data as $key => $value) {
             if (is_object($value) || is_array($value)) {
                 $data[$key] = $this->ensureArray($value);
             }
         }
-        
+
         return $data;
     }
 
     public function openEditModal(int $planId): void
     {
         $plan = SubscriptionPlan::findOrFail($planId);
-        
+
         $this->editingPlanId = $planId;
         $this->editForm = [
             'name' => $plan->name,
+            'slug' => $plan->slug,
             'price' => $plan->price,
             'max_stores' => $plan->max_stores,
             'max_users' => $plan->max_users,
@@ -151,7 +152,7 @@ class SubscriptionSettings extends Component
 
         Cache::forever('subscription_trial_days', $this->trialDays);
         Cache::forever('subscription_currency', $this->currency);
-        
+
         $this->dispatch('show-toast', message: 'Paramètres généraux mis à jour !', type: 'success');
     }
 
@@ -159,11 +160,11 @@ class SubscriptionSettings extends Component
     {
         // Désactiver "populaire" sur tous les plans
         SubscriptionPlan::query()->update(['is_popular' => false]);
-        
+
         // Activer sur le plan sélectionné
         $plan = SubscriptionPlan::findOrFail($planId);
         $plan->update(['is_popular' => !$plan->is_popular]);
-        
+
         $this->dispatch('show-toast', message: 'Plan mis en avant !', type: 'success');
     }
 
@@ -171,7 +172,7 @@ class SubscriptionSettings extends Component
     {
         // Réexécuter le seeder pour réinitialiser les plans
         \Artisan::call('db:seed', ['--class' => 'SubscriptionPlanSeeder']);
-        
+
         $this->discounts = [
             '3_months' => 5,
             '6_months' => 10,
@@ -220,7 +221,7 @@ class SubscriptionSettings extends Component
     public function render()
     {
         $plans = SubscriptionPlan::active()->ordered()->get();
-        
+
         return view('livewire.admin.subscription-settings', [
             'plans' => $plans,
             'stats' => $this->stats,

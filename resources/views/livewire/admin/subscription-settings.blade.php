@@ -352,11 +352,11 @@
 
                 <!-- Prix mensuel -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Prix mensuel ({{ $currency }}) @if($editingPlan !== 'free')<span class="text-red-500">*</span>@endif</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Prix mensuel ({{ $currency }}) @if(($editForm['slug'] ?? '') !== 'free')<span class="text-red-500">*</span>@endif</label>
                     <input type="number" wire:model="editForm.price" min="0" step="100"
                         class="w-full px-4 py-2.5 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white text-gray-900 transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
-                        placeholder="Ex: 9900" @if($editingPlan === 'free') disabled @endif>
-                    @if($editingPlan === 'free')
+                        placeholder="Ex: 9900" @if(($editForm['slug'] ?? '') === 'free') disabled @endif>
+                    @if(($editForm['slug'] ?? '') === 'free')
                         <p class="text-xs text-gray-500 mt-1">Le plan gratuit ne peut pas avoir de prix</p>
                     @endif
                     @error('editForm.price') <span class="text-sm text-red-500">{{ $message }}</span> @enderror
