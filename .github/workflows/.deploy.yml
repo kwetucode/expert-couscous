@@ -1,9 +1,10 @@
+name: 🚀 Deploy via SSH Shop app
 
-name: 🚀 Deploy via SSH Shop backend
 on:
   push:
     branches:
       - main # Déclenche le workflow sur chaque push sur la branche main
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -16,26 +17,35 @@ jobs:
       - name: ⚙️ Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: "8.2"
-        # Installe PHP 8.2 sur l'environnement GitHub Actions
-
+          php-version: "8.3"
+        # Installe PHP 8.3 sur l'environnement GitHub Actions
+        # Crée les dossiers nécessaires pour Laravel avant l'installation
       - name: � Install dependencies
         run: composer install --no-dev --optimize-autoloader
         # Installe les dépendances PHP sans les dépendances de développement
-
-      - name: 🚀 Deploy to Hostinger via SSH
-        uses: appleboy/scp-action@v0.1.4
+      - name: 📂 Prepare deployment directory on server
+        uses: appleboy/ssh-action@v1.1.0
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT }}
-          source: "./"
-          target: ${{ secrets.DEPLOY_PATH }}
-          rm: false
-          overwrite: true
-          strip_components: 0
-        # Transfère tous les fichiers du projet vers le serveur distant via SCP
+          command_timeout: 10m
+          script_stop: false
+          use_insecure_cipher: false
+
+        # Crée le répertoire de déploiement si nécessaire
+      - name: 🚀 Deploy to Hostinger via rsync
+        uses: burnett01/rsync-deployments@7.0.1
+        with:
+          switches: -avzr --delete --exclude='.git*' --exclude='node_modules' --exclude='.env'
+          path: ./
+          remote_path: ${{ secrets.DEPLOY_PATH }}
+          remote_host: ${{ secrets.SSH_HOST }}
+          remote_port: ${{ secrets.SSH_PORT }}
+          remote_user: ${{ secrets.SSH_USERNAME }}
+          remote_key: ${{ secrets.SSH_PRIVATE_KEY }}
+        # Transfère tous les fichiers du projet vers le serveur distant via rsync
 
       - name: 🔧 Run artisan commands remotely
         uses: appleboy/ssh-action@v1.1.0
@@ -44,11 +54,12 @@ jobs:
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT }}
+          command_timeout: 10m
+          script_stop: false
+          use_insecure_cipher: false
           script: |
             cd ${{ secrets.DEPLOY_PATH }}
-            php artisan migrate
-            php artisan db:seed --force
-            php artisan key:generate
+            php artisan migrate --force
             php artisan config:cache
             php artisan route:cache
             php artisan view:cache
@@ -62,6 +73,9 @@ jobs:
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT }}
+          command_timeout: 10m
+          script_stop: false
+          use_insecure_cipher: false
           script: |
             [ -f ${{ secrets.DEPLOY_PATH }}/index.php ] || cp ${{ secrets.DEPLOY_PATH }}/public/index.php ${{ secrets.DEPLOY_PATH }}/index.php
             [ -f ${{ secrets.DEPLOY_PATH }}/robots.txt ] || cp ${{ secrets.DEPLOY_PATH }}/public/robots.txt ${{ secrets.DEPLOY_PATH }}/robots.txt
