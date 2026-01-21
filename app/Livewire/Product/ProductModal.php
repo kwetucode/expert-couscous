@@ -38,6 +38,9 @@ class ProductModal extends Component
     public $showDescription = false;
     public $showImage = false;
 
+    // Filtered categories based on selected product type
+    public $filteredCategories = [];
+
     protected $listeners = [
         'openProductModal' => 'open',
         'editProduct' => 'edit',
@@ -57,6 +60,9 @@ class ProductModal extends Component
             Log::error('Erreur lors de la génération automatique du code-barres: ' . $e->getMessage());
             // Continue without barcode - user can generate manually
         }
+
+        // Charger toutes les catégories au départ
+        $this->loadFilteredCategories();
 
         $this->isOpen = true;
         $this->addVariant();
@@ -164,6 +170,9 @@ class ProductModal extends Component
         $this->showDescription = !empty($product['description']);
         $this->showImage = !empty($product['image']);
 
+        // Charger les catégories filtrées par type
+        $this->loadFilteredCategories();
+
         // Load existing attribute values if product has a type
         if (!empty($product['product_type_id'])) {
             $this->loadExistingAttributeValues($productId);
@@ -220,6 +229,46 @@ class ProductModal extends Component
                 Log::error('Erreur lors de la génération de la référence: ' . $e->getMessage());
                 $this->dispatch('show-toast', message: 'Erreur : Impossible de générer la référence', type: 'error');
             }
+        }
+    }
+
+    /**
+     * Charge les catégories filtrées quand le type de produit change
+     */
+    public function updatedFormProductTypeId()
+    {
+        $this->loadFilteredCategories();
+        
+        // Réinitialiser la catégorie sélectionnée si elle n'appartient plus au type
+        if ($this->form->category_id) {
+            $categoryBelongsToType = collect($this->filteredCategories)
+                ->contains('id', $this->form->category_id);
+            
+            if (!$categoryBelongsToType) {
+                $this->form->category_id = null;
+                $this->form->reference = '';
+            }
+        }
+        
+        $this->calculateVariantPreview();
+    }
+
+    /**
+     * Charge les catégories filtrées par type de produit
+     */
+    private function loadFilteredCategories()
+    {
+        $categoryRepository = app(CategoryRepository::class);
+        
+        if (empty($this->form->product_type_id)) {
+            // Si aucun type n'est sélectionné, afficher toutes les catégories
+            $this->filteredCategories = $categoryRepository->all()->toArray();
+        } else {
+            // Filtrer les catégories par type de produit
+            $this->filteredCategories = \App\Models\Category::where('product_type_id', $this->form->product_type_id)
+                ->orderBy('name')
+                ->get()
+                ->toArray();
         }
     }
 
@@ -331,7 +380,7 @@ class ProductModal extends Component
     public function render(CategoryRepository $categoryRepository, ProductTypeRepository $productTypeRepository)
     {
         return view('livewire.product.product-modal', [
-            'categories' => $categoryRepository->all(),
+            'categories' => $this->filteredCategories,
             'productTypes' => $productTypeRepository->allActive(),
         ]);
     }

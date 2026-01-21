@@ -107,36 +107,11 @@
                                         @enderror
                                     </div>
 
-                                    <!-- Category -->
-                                    <div>
-                                        <label for="form.category_id"
-                                            class="block text-sm font-medium text-gray-700 mb-2">
-                                            Catégorie <span class="text-red-500">*</span>
-                                        </label>
-                                        <select wire:model.live="form.category_id" id="form.category_id"
-                                            class="block w-full px-3 py-2.5 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
-                                            <option value="">Sélectionnez une catégorie</option>
-                                            @foreach ($categories as $category)
-                                                <option value="{{ $category->id }}">{{ $category->name }}</option>
-                                            @endforeach
-                                        </select>
-                                        @error('form.category_id')
-                                            <p class="mt-2 text-sm text-red-600 flex items-center">
-                                                <svg class="w-4 h-4 mr-1.5" fill="currentColor" viewBox="0 0 20 20">
-                                                    <path fill-rule="evenodd"
-                                                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-                                                        clip-rule="evenodd" />
-                                                </svg>
-                                                {{ $message }}
-                                            </p>
-                                        @enderror
-                                    </div>
-
                                     <!-- Product Type -->
                                     <div>
                                         <label for="form.product_type_id"
                                             class="block text-sm font-medium text-gray-700 mb-2">
-                                            Type de produit
+                                            Type de produit <span class="text-red-500">*</span>
                                         </label>
                                         <select wire:model.live="form.product_type_id" id="form.product_type_id"
                                             class="block w-full px-3 py-2.5 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
@@ -156,6 +131,46 @@
                                                 {{ $message }}
                                             </p>
                                         @enderror
+                                        <p class="mt-1.5 text-xs text-gray-500">
+                                            Sélectionnez d'abord le type pour filtrer les catégories
+                                        </p>
+                                    </div>
+
+                                    <!-- Category -->
+                                    <div>
+                                        <label for="form.category_id"
+                                            class="block text-sm font-medium text-gray-700 mb-2">
+                                            Catégorie
+                                        </label>
+                                        <select wire:model.live="form.category_id" id="form.category_id"
+                                            class="block w-full px-3 py-2.5 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
+                                            @if(empty($form->product_type_id)) disabled @endif>
+                                            <option value="">
+                                                @if(empty($form->product_type_id))
+                                                    Sélectionnez d'abord un type
+                                                @else
+                                                    Sélectionnez une catégorie
+                                                @endif
+                                            </option>
+                                            @foreach ($categories as $category)
+                                                <option value="{{ $category['id'] }}">{{ $category['name'] }}</option>
+                                            @endforeach
+                                        </select>
+                                        @error('form.category_id')
+                                            <p class="mt-2 text-sm text-red-600 flex items-center">
+                                                <svg class="w-4 h-4 mr-1.5" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fill-rule="evenodd"
+                                                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                                                        clip-rule="evenodd" />
+                                                </svg>
+                                                {{ $message }}
+                                            </p>
+                                        @enderror
+                                        @if(!empty($form->product_type_id) && empty($categories))
+                                            <p class="mt-1.5 text-xs text-amber-600">
+                                                Aucune catégorie pour ce type. Créez-en une d'abord.
+                                            </p>
+                                        @endif
                                     </div>
                                 </div>
 
