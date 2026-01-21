@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ config('app.name', 'ShopFlow') }} - Gestion Multi-Commerce</title>
+    <title>{{ config('app.name', 'EasyVente') }} - Gestion Multi-Commerce</title>
     <link rel="icon" href="/favicon.ico" sizes="any">
     <link rel="icon" href="/favicon.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
@@ -54,6 +54,18 @@
             position: relative;
             width: 100%;
             max-width: 600px;
+        }
+
+        @media (max-width: 768px) {
+            .device-laptop {
+                max-width: 100%;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .device-laptop {
+                max-width: 100%;
+            }
         }
 
         .laptop-frame {
@@ -175,6 +187,18 @@
             padding: 20px;
         }
 
+        @media (max-width: 768px) {
+            .mockup-container {
+                padding: 10px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .mockup-container {
+                padding: 10px;
+            }
+        }
+
         .mockup-glow {
             position: absolute;
             inset: 0;
@@ -210,6 +234,18 @@
             0%, 100% { transform: translate(0, 0) scale(1); }
             33% { transform: translate(30px, -30px) scale(1.1); }
             66% { transform: translate(-20px, 20px) scale(0.9); }
+        }
+
+        @media (max-width: 640px) {
+            .blob {
+                display: none;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .blob {
+                display: none;
+            }
         }
 
         .glass-card {
@@ -297,10 +333,10 @@
         <div class="max-w-7xl mx-auto flex items-center justify-between">
             <!-- Logo -->
             <div class="flex items-center gap-3">
-                <div class="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-                    <span class="text-white font-bold text-xl">SF</span>
+                <div class="w-12 h-12 flex items-center justify-center">
+                    <img src="{{ asset('icon.png') }}" alt="{{ config('app.name', 'EasyVente') }}" class="w-full h-full object-contain rounded-xl">
                 </div>
-                <span class="text-2xl font-bold logo-text">{{ config('app.name', 'ShopFlow') }}</span>
+                <span class="text-2xl font-bold logo-text">{{ config('app.name', 'EasyVente') }}</span>
             </div>
 
             <!-- Auth Buttons -->
@@ -344,7 +380,7 @@
 
     <!-- Hero Section -->
     <main class="relative z-10">
-        <div class="max-w-7xl mx-auto px-6 pt-16 pb-24">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 pt-8 sm:pt-12 lg:pt-16 pb-12 sm:pb-16 lg:pb-24">
             <div class="grid lg:grid-cols-2 gap-16 items-center">
                 <!-- Left Content -->
                 <div class="space-y-8">
@@ -353,33 +389,34 @@
                         <span class="text-sm text-indigo-300">Version {{ app()->version() ?? '1.0' }} disponible</span>
                     </div>
 
-                    <h1 class="text-5xl lg:text-6xl font-bold leading-tight">
+                    <h1 class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
                         Gérez votre
                         <span class="logo-text">commerce</span>
                         <br>en toute simplicité
                     </h1>
 
-                    <p class="text-xl text-slate-400 leading-relaxed max-w-lg">
-                        ShopFlow est la solution complète pour la gestion multi-boutiques.
+                    <p class="text-base sm:text-lg lg:text-xl text-slate-400 leading-relaxed max-w-lg">
+                        EasyVente est la solution complète pour la gestion multi-boutiques.
                         Stocks, ventes, employés et statistiques en temps réel.
                     </p>
 
-                    <div class="flex flex-wrap gap-4">
+                    <div class="flex flex-wrap gap-3 sm:gap-4">
                         @auth
-                            <a href="{{ route('dashboard') }}" class="btn-primary px-8 py-4 rounded-xl font-semibold text-lg shadow-xl flex items-center gap-2">
+                            <a href="{{ route('dashboard') }}" class="btn-primary px-4 sm:px-6 lg:px-8 py-3 sm:py-4 rounded-xl font-semibold text-sm sm:text-base lg:text-lg shadow-xl flex items-center gap-2">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
                                 </svg>
                                 Accéder au tableau de bord
                             </a>
                         @else
-                            <a href="{{ route('register') }}" class="btn-primary px-8 py-4 rounded-xl font-semibold text-lg shadow-xl flex items-center gap-2">
-                                Commencer gratuitement
+                            <a href="{{ route('register') }}" class="btn-primary px-4 sm:px-6 lg:px-8 py-3 sm:py-4 rounded-xl font-semibold text-sm sm:text-base lg:text-lg shadow-xl flex items-center gap-2">
+                                <span class="hidden sm:inline">Commencer gratuitement</span>
+                                <span class="sm:hidden">Commencer</span>
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
                                 </svg>
                             </a>
-                            <a href="{{ route('login') }}" class="btn-secondary px-8 py-4 rounded-xl font-semibold text-lg flex items-center gap-2">
+                            <a href="{{ route('login') }}" class="btn-secondary px-4 sm:px-6 lg:px-8 py-3 sm:py-4 rounded-xl font-semibold text-sm sm:text-base lg:text-lg flex items-center gap-2">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/>
                                 </svg>
@@ -389,18 +426,18 @@
                     </div>
 
                     <!-- Stats -->
-                    <div class="grid grid-cols-3 gap-4 pt-8">
-                        <div class="stat-card p-4 rounded-xl text-center">
-                            <div class="text-3xl font-bold text-indigo-400">∞</div>
-                            <div class="text-sm text-slate-400 mt-1">Boutiques</div>
+                    <div class="grid grid-cols-3 gap-2 sm:gap-4 pt-6 sm:pt-8">
+                        <div class="stat-card p-3 sm:p-4 rounded-xl text-center">
+                            <div class="text-2xl sm:text-3xl font-bold text-indigo-400">∞</div>
+                            <div class="text-xs sm:text-sm text-slate-400 mt-1">Boutiques</div>
                         </div>
-                        <div class="stat-card p-4 rounded-xl text-center">
-                            <div class="text-3xl font-bold text-purple-400">100%</div>
-                            <div class="text-sm text-slate-400 mt-1">Sécurisé</div>
+                        <div class="stat-card p-3 sm:p-4 rounded-xl text-center">
+                            <div class="text-2xl sm:text-3xl font-bold text-purple-400">100%</div>
+                            <div class="text-xs sm:text-sm text-slate-400 mt-1">Sécurisé</div>
                         </div>
-                        <div class="stat-card p-4 rounded-xl text-center">
-                            <div class="text-3xl font-bold text-cyan-400">24/7</div>
-                            <div class="text-sm text-slate-400 mt-1">Disponible</div>
+                        <div class="stat-card p-3 sm:p-4 rounded-xl text-center">
+                            <div class="text-2xl sm:text-3xl font-bold text-cyan-400">24/7</div>
+                            <div class="text-xs sm:text-sm text-slate-400 mt-1">Disponible</div>
                         </div>
                     </div>
                 </div>
@@ -415,7 +452,7 @@
                             <div class="laptop-screen">
                                 {{-- Remplacer par votre capture d'écran desktop --}}
                                 @if(file_exists(public_path('images/mockup-desktop.png')))
-                                    <img src="{{ asset('images/mockup-desktop.png') }}" alt="ShopFlow Dashboard">
+                                    <img src="{{ asset('images/mockup-desktop.png') }}" alt="EasyVente Dashboard">
                                 @else
                                     <div class="laptop-screen-placeholder">
                                         <div class="text-center p-4">
@@ -433,13 +470,13 @@
                         <div class="laptop-stand"></div>
 
                         <!-- Phone Mockup -->
-                        <div class="device-phone floating-delay">
+                        <div class="device-phone floating-delay hidden md:block">
                             <div class="phone-frame">
                                 <div class="phone-notch"></div>
                                 <div class="phone-screen">
                                     {{-- Remplacer par votre capture d'écran mobile --}}
                                     @if(file_exists(public_path('images/mockup-mobile.png')))
-                                        <img src="{{ asset('images/mockup-mobile.png') }}" alt="ShopFlow Mobile">
+                                        <img src="{{ asset('images/mockup-mobile.png') }}" alt="EasyVente Mobile">
                                     @else
                                         <div class="phone-screen-placeholder">
                                             <div class="text-center p-2">
@@ -459,16 +496,16 @@
         </div>
 
         <!-- Pricing Section - Accessible en haut -->
-        <div id="pricing" class="max-w-7xl mx-auto px-6 py-16">
-            <div class="text-center mb-12">
+        <div id="pricing" class="max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
+            <div class="text-center mb-8 sm:mb-12">
                 <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-sm font-medium mb-4">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                     </svg>
                     Tarifs transparents
                 </span>
-                <h2 class="text-4xl font-bold mb-4">Choisissez votre plan</h2>
-                <p class="text-xl text-slate-400 max-w-2xl mx-auto">
+                <h2 class="text-2xl sm:text-3xl lg:text-4xl font-bold mb-4">Choisissez votre plan</h2>
+                <p class="text-base sm:text-lg lg:text-xl text-slate-400 max-w-2xl mx-auto">
                     Des offres adaptées à la taille de votre entreprise. Évoluez à votre rythme.
                 </p>
             </div>
@@ -574,13 +611,13 @@
         </div>
 
         <!-- App Preview Section -->
-        <div class="max-w-7xl mx-auto px-6 py-16">
-            <div class="glass-card rounded-3xl p-8 lg:p-12">
-                <div class="grid lg:grid-cols-2 gap-12 items-center">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
+            <div class="glass-card rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-12">
+                <div class="grid lg:grid-cols-2 gap-6 sm:gap-8 lg:gap-12 items-center">
                     <!-- Left - Features List -->
-                    <div class="space-y-6">
-                        <h2 class="text-3xl font-bold">Une interface intuitive</h2>
-                        <p class="text-slate-400 text-lg">
+                    <div class="space-y-4 sm:space-y-6">
+                        <h2 class="text-2xl sm:text-3xl font-bold">Une interface intuitive</h2>
+                        <p class="text-slate-400 text-base sm:text-lg">
                             Découvrez une expérience utilisateur optimisée pour la productivité
                         </p>
 
@@ -795,10 +832,10 @@
         <div class="max-w-7xl mx-auto px-6 py-12">
             <div class="flex flex-col md:flex-row items-center justify-between gap-6">
                 <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center">
-                        <span class="text-white font-bold">SF</span>
+                    <div class="w-10 h-10 flex items-center justify-center">
+                        <img src="{{ asset('icon.png') }}" alt="{{ config('app.name', 'EasyVente') }}" class="w-full h-full object-contain rounded-lg">
                     </div>
-                    <span class="text-lg font-semibold">{{ config('app.name', 'ShopFlow') }}</span>
+                    <span class="text-lg font-semibold">{{ config('app.name', 'EasyVente') }}</span>
                 </div>
 
                 <div class="flex items-center gap-6 text-slate-400 text-sm">
@@ -812,7 +849,7 @@
                         Nous contacter
                     </button>
                     <span>•</span>
-                    <span>© {{ date('Y') }} {{ config('app.name', 'ShopFlow') }}</span>
+                    <span>© {{ date('Y') }} {{ config('app.name', 'EasyVente') }}</span>
                 </div>
 
                 <div class="flex items-center gap-2 text-sm">

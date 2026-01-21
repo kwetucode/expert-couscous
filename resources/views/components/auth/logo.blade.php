@@ -40,16 +40,11 @@
 
 <div {{ $attributes->merge(['class' => 'inline-flex items-center space-x-3']) }}>
     <div class="relative">
-        <div class="{{ $s['container'] }} bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/30">
-            <span class="text-white font-black {{ $s['text'] }}">SF</span>
-        </div>
-        <div class="absolute -bottom-1 -right-1 {{ $s['badge'] }} bg-emerald-500 rounded-full border-2 border-slate-900 flex items-center justify-center">
-            <svg class="{{ $s['badgeIcon'] }} text-white" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-            </svg>
+        <div class="{{ $s['container'] }} flex items-center justify-center">
+            <img src="{{ asset('icon.png') }}" alt="{{ config('app.name', 'EasyVente') }}" class="w-full h-full object-contain rounded-xl">
         </div>
     </div>
     @if($showAppName)
-        <span class="{{ $s['appName'] }} font-bold text-white">{{ config('app.name', 'ShopFlow') }}</span>
+        <span class="{{ $s['appName'] }} font-bold text-white">{{ config('app.name', 'EasyVente') }}</span>
     @endif
 </div>

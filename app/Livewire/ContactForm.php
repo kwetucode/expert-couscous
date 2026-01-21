@@ -75,13 +75,13 @@ class ContactForm extends Component
                 'name' => $this->name,
                 'email' => $this->email,
                 'subject' => $this->subject,
-                'message' => $this->messageContent,
+                'messageContent' => $this->messageContent,
             ];
 
             // Option 1: Envoyer par email (si configuré)
             if (config('mail.mailers.smtp.host')) {
                 Mail::send('emails.contact', $contactData, function ($mail) use ($contactData) {
-                    $mail->to(config('mail.from.address', 'contact@shopflow.com'))
+                    $mail->to(config('mail.from.address', 'contact@easyvente.com'))
                         ->replyTo($contactData['email'], $contactData['name'])
                         ->subject('Contact: ' . $contactData['subject']);
                 });

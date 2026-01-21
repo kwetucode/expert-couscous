@@ -1,12 +1,38 @@
 <div>
     <!-- Modal Contact -->
-    <x-modal 
-        :show="$showModal" 
-        name="showModal" 
-        maxWidth="lg" 
-        :showHeader="false"
+    @if($showModal)
+    <div 
+        x-data="{ show: @entangle('showModal') }"
+        x-show="show"
+        x-cloak
+        class="fixed inset-0 overflow-y-auto px-4 py-6 sm:px-0 z-50"
+        @keydown.escape.window="$wire.closeModal()"
+        style="display: none;"
     >
-        <div class="bg-white rounded-xl shadow-xl">
+        <!-- Backdrop -->
+        <div
+            x-on:click="$wire.closeModal()"
+            x-transition:enter="ease-out duration-300"
+            x-transition:enter-start="opacity-0"
+            x-transition:enter-end="opacity-100"
+            x-transition:leave="ease-in duration-200"
+            x-transition:leave-start="opacity-100"
+            x-transition:leave-end="opacity-0"
+            class="fixed inset-0 bg-gray-900/50 backdrop-blur-sm"
+        ></div>
+
+        <!-- Modal Container -->
+        <div class="flex min-h-full items-center justify-center">
+            <div
+                x-transition:enter="ease-out duration-300"
+                x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+                x-transition:leave="ease-in duration-200"
+                x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+                x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                class="relative w-full sm:max-w-lg transform transition-all"
+            >
+                <div class="bg-white rounded-xl shadow-xl">
             @if($submitted)
                 <!-- Success State -->
                 <div class="p-8 text-center">
@@ -155,7 +181,7 @@
                                 id="messageContent"
                                 wire:model.blur="messageContent"
                                 rows="4"
-                                class="block w-full px-3 py-2.5 border border-gray-300 rounded-lg bg-white text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition resize-none @error('messageContent') border-red-500 @enderror"
+                                class="block w-full px-3 py-2.5 border border-gray-300 rounded-lg bg-white text-gray-900 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition resize-none @error('messageContent') border-red-500 @enderror"
                                 placeholder="Décrivez votre demande en détail..."
                             ></textarea>
                             <div class="flex justify-between mt-2">
@@ -222,6 +248,9 @@
                     </div>
                 </form>
             @endif
+                </div>
+            </div>
         </div>
-    </x-modal>
+    </div>
+    @endif
 </div>

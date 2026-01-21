@@ -6,8 +6,8 @@
         <!-- Logo & Collapse Button -->
         <div class="flex items-center justify-between h-16 px-6 border-b border-gray-200 bg-white/80 backdrop-blur-sm">
             <a href="{{ route('dashboard') }}" wire:navigate class="flex items-center space-x-3 sidebar-logo transition-all duration-300">
-                <div class="w-10 h-10 bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 rounded-xl flex items-center justify-center shadow-lg flex-shrink-0 transform hover:scale-110 transition-transform">
-                    <span class="text-white font-bold text-lg">{{ $logo }}</span>
+                <div class="w-10 h-10 flex items-center justify-center flex-shrink-0">
+                    <img src="{{ asset('icon.png') }}" alt="{{ $appName ?? config('app.name') }}" class="w-full h-full object-contain rounded-xl">
                 </div>
                 <span class="text-xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent sidebar-text whitespace-nowrap">
                     {{ $appName ?? config('app.name') }}

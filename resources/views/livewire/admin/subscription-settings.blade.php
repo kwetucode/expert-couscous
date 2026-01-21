@@ -21,7 +21,7 @@
                     Configurez les plans, prix et limites des abonnements
                 </p>
             </div>
-            <button wire:click="resetToDefaults" 
+            <button wire:click="resetToDefaults"
                 wire:confirm="Êtes-vous sûr de vouloir réinitialiser tous les paramètres ?"
                 wire:loading.attr="disabled"
                 wire:target="resetToDefaults"
@@ -184,8 +184,8 @@
                         </div>
 
                         <div class="flex space-x-2">
-                            <button wire:click="openEditModal({{ $plan['id'] }})" 
-                                wire:loading.attr="disabled" 
+                            <button wire:click="openEditModal({{ $plan['id'] }})"
+                                wire:loading.attr="disabled"
                                 wire:target="openEditModal({{ $plan['id'] }})"
                                 class="flex-1 px-3 py-2.5 text-sm font-semibold bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-xl transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed">
                                 <span wire:loading.remove wire:target="openEditModal({{ $plan['id'] }})">
@@ -199,7 +199,7 @@
                                     Chargement...
                                 </span>
                             </button>
-                            <button wire:click="togglePopular({{ $plan['id'] }})" 
+                            <button wire:click="togglePopular({{ $plan['id'] }})"
                                 wire:loading.attr="disabled"
                                 wire:target="togglePopular({{ $plan['id'] }})"
                                 class="px-3 py-2.5 text-sm border-2 border-gray-200 hover:border-amber-400 hover:bg-amber-50 rounded-xl transition-all disabled:opacity-50"

@@ -1,13 +1,13 @@
-# Images Mockup - ShopFlow
+# Images Mockup - EasyVente
 
-Ce dossier contient les images utilisées pour la page d'accueil de ShopFlow.
+Ce dossier contient les images utilisées pour la page d'accueil de EasyVente.
 
 ## Images requises
 
 ### 1. mockup-desktop.png
 - **Dimensions recommandées** : 1920x1200 pixels (ratio 16:10)
 - **Format** : PNG ou JPG
-- **Description** : Capture d'écran du tableau de bord ShopFlow en version desktop
+- **Description** : Capture d'écran du tableau de bord EasyVente en version desktop
 - **Conseil** : Prenez une capture de la page dashboard avec des données d'exemple
 
 ### 2. mockup-mobile.png  

@@ -79,35 +79,35 @@
     <div class="container">
         <div class="header">
             <h1>📬 Nouveau message de contact</h1>
-            <p>Via {{ config('app.name', 'ShopFlow') }}</p>
+            <p>Via {{ config('app.name', 'EasyVente') }}</p>
         </div>
-        
+
         <div class="content">
             <div class="field">
                 <div class="field-label">Nom</div>
                 <div class="field-value">{{ $name }}</div>
             </div>
-            
+
             <div class="field">
                 <div class="field-label">Email</div>
                 <div class="field-value">
                     <a href="mailto:{{ $email }}" style="color: #6366f1;">{{ $email }}</a>
                 </div>
             </div>
-            
+
             <div class="field">
                 <div class="field-label">Sujet</div>
                 <div class="field-value">{{ $subject }}</div>
             </div>
-            
+
             <div class="field">
                 <div class="field-label">Message</div>
-                <div class="message-content">{{ $message }}</div>
+                <div class="message-content">{{ $messageContent ?? $message }}</div>
             </div>
         </div>
-        
+
         <div class="footer">
-            <p>Ce message a été envoyé depuis le formulaire de contact de <strong>{{ config('app.name', 'ShopFlow') }}</strong></p>
+            <p>Ce message a été envoyé depuis le formulaire de contact de <strong>{{ config('app.name', 'EasyVente') }}</strong></p>
             <p>{{ now()->format('d/m/Y à H:i') }}</p>
         </div>
     </div>

@@ -278,7 +278,7 @@
         <div class="header">
             <div class="header-content">
                 <div class="header-left">
-                    <div class="company-name">{{ config('app.name', 'ShopFlow') }}</div>
+                    <div class="company-name">{{ config('app.name', 'EasyVente') }}</div>
                     <div class="report-title">{{ $title }}</div>
                 </div>
                 <div class="header-right">
@@ -294,7 +294,7 @@
     <div class="footer">
         <div class="footer-content">
             <div class="footer-left">
-                {{ config('app.name', 'ShopFlow') }} - {{ $title }}
+                {{ config('app.name', 'EasyVente') }} - {{ $title }}
             </div>
             <div class="footer-right">
                 Page <span class="page-number"></span>
