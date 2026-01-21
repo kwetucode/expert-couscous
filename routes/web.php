@@ -49,7 +49,7 @@ use App\Services\SubscriptionService;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    $plans = SubscriptionService::getPlansFromCache();
+    $plans = SubscriptionService::getPlansFromDatabase();
     $currency = SubscriptionService::getCurrencyFromCache();
 
     return view('welcome', compact('plans', 'currency'));

@@ -10,7 +10,6 @@ use Illuminate\Support\Facades\Cache;
 class SubscriptionSettings extends Component
 {
     // Edit modal
-    public bool $showEditModal = false;
     public ?int $editingPlanId = null;
     public array $editForm = [
         'name' => '',
@@ -20,7 +19,7 @@ class SubscriptionSettings extends Component
         'max_products' => 100,
         'features' => [],
     ];
-    
+
     public string $currency = 'CDF';
 
     public function mount(): void
@@ -37,7 +36,7 @@ class SubscriptionSettings extends Component
     public function openEditModal(int $planId): void
     {
         $plan = SubscriptionPlan::findOrFail($planId);
-        
+
         $this->editingPlanId = $planId;
         $this->editForm = [
             'name' => $plan->name,
@@ -48,14 +47,8 @@ class SubscriptionSettings extends Component
             'max_products' => $plan->max_products,
             'features_text' => implode("\n", $plan->features ?? []),
         ];
-        $this->showEditModal = true;
-    }
 
-    public function closeEditModal(): void
-    {
-        $this->showEditModal = false;
-        $this->editingPlanId = null;
-        $this->editForm = [];
+        $this->dispatch('open-plan-modal');
     }
 
     public function savePlan(): void
@@ -86,7 +79,7 @@ class SubscriptionSettings extends Component
             'features' => array_values($features),
         ]);
 
-        $this->closeEditModal();
+        $this->dispatch('close-plan-modal');
         $this->dispatch('show-toast', message: 'Plan mis à jour avec succès !', type: 'success');
     }
 
@@ -94,11 +87,11 @@ class SubscriptionSettings extends Component
     {
         // Désactiver "populaire" sur tous les plans
         SubscriptionPlan::query()->update(['is_popular' => false]);
-        
+
         // Activer sur le plan sélectionné
         $plan = SubscriptionPlan::findOrFail($planId);
         $plan->update(['is_popular' => !$plan->is_popular]);
-        
+
         $this->dispatch('show-toast', message: 'Plan mis en avant !', type: 'success');
     }
 
@@ -106,7 +99,7 @@ class SubscriptionSettings extends Component
     {
         // Réexécuter le seeder pour réinitialiser les plans
         \Artisan::call('db:seed', ['--class' => 'SubscriptionPlanSeeder']);
-        
+
         $this->currency = 'CDF';
         Cache::forget('subscription_currency');
 
@@ -146,7 +139,7 @@ class SubscriptionSettings extends Component
     public function render()
     {
         $plans = SubscriptionPlan::active()->ordered()->get();
-        
+
         return view('livewire.admin.subscription-settings', [
             'plans' => $plans,
             'stats' => $this->stats,

@@ -1,4 +1,6 @@
-<div>
+<div x-data="{ showModal: false, isEditing: true }"
+     @open-plan-modal.window="showModal = true"
+     @close-plan-modal.window="showModal = false; $wire.editingPlanId = null; $wire.editForm = {}">
     <x-slot name="header">
         <x-breadcrumb :items="[
             ['label' => 'Accueil', 'url' => route('dashboard')],
@@ -180,85 +182,20 @@
                 @endforeach
             </div>
         </div>
-
-        <!-- Preview Section -->
-        <div class="bg-gradient-to-br from-white to-amber-50 rounded-xl shadow-md border border-amber-100 p-6 hover:shadow-lg transition-shadow">
-            <div class="flex items-center gap-2 mb-2">
-                <div class="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
-                    <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                    </svg>
-                </div>
-                <div>
-                    <h3 class="text-lg font-bold text-gray-900">Aperçu des tarifs (page publique)</h3>
-                    <p class="text-sm text-gray-500">Voici comment les plans apparaîtront sur la page d'accueil</p>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-4">
-                @foreach($plans as $slug => $plan)
-                    <div class="relative bg-white rounded-2xl shadow-lg border border-gray-200 p-6 hover:shadow-xl transition-shadow
-                        @if($plan['is_popular'] ?? false) ring-2 ring-indigo-500 @endif">
-
-                        @if($plan['is_popular'] ?? false)
-                            <div class="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                                <span class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-xs font-bold px-4 py-1 rounded-full shadow-md">
-                                    POPULAIRE
-                                </span>
-                            </div>
-                        @endif
-
-                        <div class="text-center pt-2">
-                            <h4 class="text-xl font-bold text-gray-900">{{ $plan['name'] }}</h4>
-                            <div class="mt-4">
-                                <span class="text-4xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-                                    {{ number_format($plan['price'], 0, ',', ' ') }}
-                                </span>
-                                <span class="text-gray-500">{{ $currency }}/mois</span>
-                            </div>
-                        </div>
-
-                        <ul class="mt-6 space-y-3">
-                            @foreach($plan['features'] ?? [] as $feature)
-                                <li class="flex items-start text-sm">
-                                    <svg class="w-5 h-5 text-green-500 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                                    </svg>
-                                    <span class="text-gray-600">{{ $feature }}</span>
-                                </li>
-                            @endforeach
-                        </ul>
-                    </div>
-                @endforeach
-            </div>
-        </div>
     </div>
 
     <!-- Edit Plan Modal -->
-    <x-modal name="showEditModal" maxWidth="lg" :showHeader="false">
-        <div class="bg-white rounded-xl shadow-xl">
-            <!-- Modal Header -->
-            <div class="flex items-center justify-between p-6 border-b border-gray-200">
-                <div class="flex items-center space-x-3">
-                    <div class="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center">
-                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                        </svg>
-                    </div>
-                    <h3 class="text-xl font-bold text-gray-900">
-                        Modifier le plan {{ $editForm['name'] ?? '' }}
-                    </h3>
-                </div>
-                <button wire:click="closeEditModal" class="text-gray-400 hover:text-gray-500 transition-colors">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                </button>
-            </div>
+    <x-ui.alpine-modal name="plan" max-width="lg"
+        edit-title="Modifier le plan"
+        icon-bg="from-indigo-500 to-purple-600">
+        <x-slot:icon>
+            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            </svg>
+        </x-slot:icon>
 
-            <!-- Modal Body -->
-            <div class="p-6 space-y-5">
+        <form wire:submit="savePlan" wire:key="plan-form-{{ $editingPlanId ?? 'new' }}">
+            <x-ui.alpine-modal-body>
                 <!-- Nom du plan -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Nom du plan <span class="text-red-500">*</span></label>
@@ -310,26 +247,14 @@
                         placeholder="Jusqu'à X magasins&#10;Support prioritaire&#10;Rapports avancés"></textarea>
                     <p class="text-xs text-gray-500 mt-1">Entrez une fonctionnalité par ligne</p>
                 </div>
-            </div>
+            </x-ui.alpine-modal-body>
 
-            <!-- Modal Footer -->
-            <div class="bg-gray-50 px-6 py-4 flex items-center justify-end space-x-3 border-t border-gray-200 rounded-b-xl">
-                <button wire:click="closeEditModal"
-                    class="px-5 py-2.5 text-gray-700 bg-white border-2 border-gray-300 hover:bg-gray-50 rounded-xl font-medium transition-all">
-                    Annuler
-                </button>
-                <button wire:click="savePlan"
-                    class="px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-xl font-medium transition-all shadow-md hover:shadow-lg">
-                    <span class="flex items-center">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                        </svg>
-                        Enregistrer
-                    </span>
-                </button>
-            </div>
-        </div>
-    </x-modal>
+            <x-ui.alpine-modal-footer
+                edit-submit-text="Enregistrer les modifications"
+                target="savePlan"
+            />
+        </form>
+    </x-ui.alpine-modal>
 
     <!-- Toast -->
     <x-toast />

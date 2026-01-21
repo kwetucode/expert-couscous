@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Organization;
 use App\Models\SubscriptionHistory;
 use App\Models\SubscriptionPayment;
+use App\Models\SubscriptionPlan;
 use App\Models\User;
 use App\Notifications\SubscriptionExpiringNotification;
 use App\Notifications\SubscriptionExpiredNotification;
@@ -54,19 +55,37 @@ class SubscriptionService
     ) {}
 
     /**
+     * Récupérer tous les plans depuis la base de données
+     */
+    public static function getPlansFromDatabase(): array
+    {
+        $plansFromDb = SubscriptionPlan::active()->ordered()->get();
+
+        $plans = [];
+        foreach ($plansFromDb as $plan) {
+            $plans[$plan->slug] = [
+                'name' => $plan->name,
+                'slug' => $plan->slug,
+                'price' => $plan->price,
+                'max_stores' => $plan->max_stores,
+                'max_users' => $plan->max_users,
+                'max_products' => $plan->max_products,
+                'features' => $plan->features ?? [],
+                'is_popular' => $plan->is_popular,
+                'color' => $plan->color ?? 'gray',
+            ];
+        }
+
+        return $plans ?: self::getDefaultPlans();
+    }
+
+    /**
      * Récupérer tous les plans depuis le cache ou les valeurs par défaut
+     * @deprecated Utiliser getPlansFromDatabase() à la place
      */
     public static function getPlansFromCache(): array
     {
-        $cachedPlans = Cache::get('subscription_plans');
-
-        if ($cachedPlans) {
-            // Convertir en array si nécessaire (pour gérer les objets stdClass du cache)
-            return self::ensureArrayRecursive($cachedPlans);
-        }
-
-        // Plans par défaut
-        return self::getDefaultPlans();
+        return self::getPlansFromDatabase();
     }
 
     /**
