@@ -23,7 +23,8 @@ class CategoryRepository
      */
     public function getByProductType(int $productTypeId): Collection
     {
-        return Category::where('product_type_id', $productTypeId)
+        return Category::withoutOrganizationScope()
+            ->where('product_type_id', $productTypeId)
             ->orderBy('name')
             ->get();
     }
