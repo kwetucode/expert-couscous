@@ -55,7 +55,7 @@
                 />
                 <x-form.input-error for="paymentAmount" />
                 <p class="text-xs text-gray-500 mt-1">
-                    Reste à payer: {{ number_format($remainingAmount, 0, ',', ' ') }} CDF
+                    Reste à payer: {{ number_format($remainingAmount, 0, ',', ' ') }} {{ current_currency() }}
                 </p>
             </x-form.form-group>
 

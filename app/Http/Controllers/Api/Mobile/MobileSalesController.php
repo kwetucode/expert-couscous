@@ -360,7 +360,7 @@ class MobileSalesController extends Controller
         if ($hasLimitedProducts && $discount > $maxAllowedDiscount) {
             return [
                 'valid' => false,
-                'message' => "La remise ne peut pas dépasser " . number_format($maxAllowedDiscount, 0, ',', ' ') . " CDF",
+                'message' => "La remise ne peut pas dépasser " . number_format($maxAllowedDiscount, 0, ',', ' ') . " " . current_currency(),
                 'max_allowed' => $maxAllowedDiscount,
                 'requested' => $discount,
             ];

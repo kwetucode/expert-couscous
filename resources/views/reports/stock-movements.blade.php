@@ -33,7 +33,7 @@
                 <div class="summary-label">Sorties</div>
             </td>
             <td style="width: 25%; text-align: center; background: #f9fafb; padding: 15px; border: 1px solid #e5e7eb;">
-                <div class="summary-value money">{{ number_format($totals['total_value'], 0, ',', ' ') }} FCFA</div>
+                <div class="summary-value money">{{ number_format($totals['total_value'], 0, ',', ' ') }} {{ current_currency() }}</div>
                 <div class="summary-label">Valeur Totale</div>
             </td>
         </tr>

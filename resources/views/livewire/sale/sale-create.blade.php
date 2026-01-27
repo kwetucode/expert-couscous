@@ -150,7 +150,7 @@
                                                         </div>
                                                         <div class="text-right flex-shrink-0">
                                                             <div class="text-sm font-bold text-indigo-600">
-                                                                {{ number_format($result['price'], 0, ',', ' ') }} <span class="text-xs">CDF</span>
+                                                                {{ number_format($result['price'], 0, ',', ' ') }} <span class="text-xs">{{ current_currency() }}</span>
                                                             </div>
                                                             <div class="text-xs font-medium mt-0.5 {{ $result['stock'] > 10 ? 'text-green-600' : ($result['stock'] > 0 ? 'text-amber-600' : 'text-red-600') }}">
                                                                 @if($result['stock'] > 0)
@@ -272,7 +272,7 @@
                                                     {{ $item['quantity'] }}
                                                 </span>
                                                 <span>×</span>
-                                                <span>{{ number_format($item['unit_price'], 0, ',', ' ') }} CDF</span>
+                                                <span>{{ number_format($item['unit_price'], 0, ',', ' ') }} {{ current_currency() }}</span>
                                                 @if($item['discount'] > 0)
                                                     <span class="text-red-500">-{{ number_format($item['discount'], 0, ',', ' ') }}</span>
                                                 @endif
@@ -283,7 +283,7 @@
                                         <div class="flex items-center gap-4">
                                             <div class="text-right">
                                                 <div class="font-bold text-gray-900">{{ number_format($item['total'], 0, ',', ' ') }}</div>
-                                                <div class="text-xs text-gray-500">CDF</div>
+                                                <div class="text-xs text-gray-500">{{ current_currency() }}</div>
                                             </div>
                                             <button type="button" wire:click="removeItem({{ $index }})"
                                                     class="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all opacity-0 group-hover:opacity-100">
@@ -441,7 +441,7 @@
                             {{-- Sous-total --}}
                             <div class="flex justify-between items-center text-gray-600">
                                 <span>Sous-total</span>
-                                <span class="font-semibold text-gray-900">{{ number_format($subtotal, 0, ',', ' ') }} CDF</span>
+                                <span class="font-semibold text-gray-900">{{ number_format($subtotal, 0, ',', ' ') }} {{ current_currency() }}</span>
                             </div>
                             
                             {{-- Remise --}}
@@ -462,13 +462,13 @@
                             @if(floatval($form->discount) > 0)
                                 <div class="flex justify-between items-center text-red-600">
                                     <span>- Remise</span>
-                                    <span>{{ number_format($form->discount, 0, ',', ' ') }} CDF</span>
+                                    <span>{{ number_format($form->discount, 0, ',', ' ') }} {{ current_currency() }}</span>
                                 </div>
                             @endif
                             @if(floatval($form->tax) > 0)
                                 <div class="flex justify-between items-center text-gray-600">
                                     <span>+ Taxe</span>
-                                    <span>{{ number_format($form->tax, 0, ',', ' ') }} CDF</span>
+                                    <span>{{ number_format($form->tax, 0, ',', ' ') }} {{ current_currency() }}</span>
                                 </div>
                             @endif
                             
@@ -476,7 +476,7 @@
                             <div class="border-t border-gray-200 pt-4">
                                 <div class="flex justify-between items-center">
                                     <span class="text-lg font-bold text-gray-900">Total</span>
-                                    <span class="text-2xl font-black text-indigo-600">{{ number_format($total, 0, ',', ' ') }} <span class="text-base font-normal">CDF</span></span>
+                                    <span class="text-2xl font-black text-indigo-600">{{ number_format($total, 0, ',', ' ') }} <span class="text-base font-normal">{{ current_currency() }}</span></span>
                                 </div>
                             </div>
                         </div>

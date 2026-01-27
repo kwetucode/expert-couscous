@@ -128,7 +128,7 @@
                                 <p class="text-green-100 text-sm font-medium">Revenus Abonnements</p>
                                 <p class="text-3xl font-bold mt-1">
                                     {{ number_format($stats['subscription_revenue'], 0, ',', ' ') }}</p>
-                                <p class="text-green-100 text-xs mt-2">FCFA total</p>
+                                <p class="text-green-100 text-xs mt-2">{{ current_currency() }} total</p>
                             </div>
                             <div class="bg-white/20 rounded-full p-3">
                                 <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -139,7 +139,7 @@
                         </div>
                         <div class="mt-4 pt-4 border-t border-white/20">
                             <span class="text-green-100 text-sm">Cette période:
-                                {{ number_format($stats['period_subscription_revenue'], 0, ',', ' ') }} FCFA</span>
+                                {{ number_format($stats['period_subscription_revenue'], 0, ',', ' ') }} {{ current_currency() }}</span>
                         </div>
                     </div>
 
@@ -259,7 +259,7 @@
                     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 text-center">
                         <p class="text-2xl font-bold text-gray-900">
                             {{ number_format($stats['total_sales_amount'], 0, ',', ' ') }}</p>
-                        <p class="text-sm text-gray-500">CA Total (FCFA)</p>
+                        <p class="text-sm text-gray-500">CA Total ({{ current_currency() }})</p>
                     </div>
                     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 text-center">
                         <p class="text-2xl font-bold text-gray-900">{{ $stats['total_roles'] }}</p>

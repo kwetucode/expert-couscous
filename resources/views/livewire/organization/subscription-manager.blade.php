@@ -175,14 +175,14 @@
                                 <p class="text-sm text-gray-600 mb-4">{{ $planDetails['description'] }}</p>
                                 <div class="flex items-baseline">
                                     <span class="text-4xl font-bold text-gray-900">{{ number_format($planDetails['monthly_price'], 0, ',', ' ') }}</span>
-                                    <span class="ml-2 text-gray-600">FCFA / mois</span>
+                                    <span class="ml-2 text-gray-600">{{ current_currency() }} / mois</span>
                                 </div>
                                 <div class="mt-2">
                                     <span class="text-sm text-gray-600">ou </span>
                                     <span class="text-2xl font-bold text-gray-900">{{ number_format($planDetails['yearly_price'], 0, ',', ' ') }}</span>
-                                    <span class="text-gray-600"> FCFA / an</span>
+                                    <span class="text-gray-600"> {{ current_currency() }} / an</span>
                                     <span class="ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                        Économisez {{ number_format(($planDetails['monthly_price'] * 12) - $planDetails['yearly_price'], 0, ',', ' ') }} FCFA
+                                        Économisez {{ number_format(($planDetails['monthly_price'] * 12) - $planDetails['yearly_price'], 0, ',', ' ') }} {{ current_currency() }}
                                     </span>
                                 </div>
                             </div>
@@ -251,7 +251,7 @@
                                         </span>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                        {{ number_format($payment->amount, 0, ',', ' ') }} FCFA
+                                        {{ number_format($payment->amount, 0, ',', ' ') }} {{ current_currency() }}
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
@@ -297,7 +297,7 @@
                                     {{ $billingPeriod === 'monthly' ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200 hover:border-gray-300' }}">
                                 <div class="text-left">
                                     <div class="font-semibold text-gray-900">Mensuel</div>
-                                    <div class="text-sm text-gray-600">{{ number_format($availablePlans[$selectedPlan]['monthly_price'], 0, ',', ' ') }} FCFA/mois</div>
+                                    <div class="text-sm text-gray-600">{{ number_format($availablePlans[$selectedPlan]['monthly_price'], 0, ',', ' ') }} {{ current_currency() }}/mois</div>
                                 </div>
                                 @if($billingPeriod === 'monthly')
                                     <svg class="w-6 h-6 text-indigo-500" fill="currentColor" viewBox="0 0 20 20">
@@ -316,7 +316,7 @@
                                             -{{ round((1 - ($availablePlans[$selectedPlan]['yearly_price'] / ($availablePlans[$selectedPlan]['monthly_price'] * 12))) * 100) }}%
                                         </span>
                                     </div>
-                                    <div class="text-sm text-gray-600">{{ number_format($availablePlans[$selectedPlan]['yearly_price'], 0, ',', ' ') }} FCFA/an</div>
+                                    <div class="text-sm text-gray-600">{{ number_format($availablePlans[$selectedPlan]['yearly_price'], 0, ',', ' ') }} {{ current_currency() }}/an</div>
                                 </div>
                                 @if($billingPeriod === 'yearly')
                                     <svg class="w-6 h-6 text-indigo-500" fill="currentColor" viewBox="0 0 20 20">
@@ -347,12 +347,12 @@
                         <div class="flex justify-between items-center">
                             <span class="text-sm font-medium text-gray-700">Total à payer</span>
                             <span class="text-2xl font-bold text-gray-900">
-                                {{ number_format($billingPeriod === 'monthly' ? $availablePlans[$selectedPlan]['monthly_price'] : $availablePlans[$selectedPlan]['yearly_price'], 0, ',', ' ') }} FCFA
+                                {{ number_format($billingPeriod === 'monthly' ? $availablePlans[$selectedPlan]['monthly_price'] : $availablePlans[$selectedPlan]['yearly_price'], 0, ',', ' ') }} {{ current_currency() }}
                             </span>
                         </div>
                         @if($billingPeriod === 'yearly')
                             <p class="text-xs text-gray-500 mt-2">
-                                Vous économisez {{ number_format(($availablePlans[$selectedPlan]['monthly_price'] * 12) - $availablePlans[$selectedPlan]['yearly_price'], 0, ',', ' ') }} FCFA avec la facturation annuelle
+                                Vous économisez {{ number_format(($availablePlans[$selectedPlan]['monthly_price'] * 12) - $availablePlans[$selectedPlan]['yearly_price'], 0, ',', ' ') }} {{ current_currency() }} avec la facturation annuelle
                             </p>
                         @endif
                     </div>

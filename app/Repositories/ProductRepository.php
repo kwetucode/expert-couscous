@@ -167,7 +167,7 @@ class ProductRepository
         }
 
         if ($status !== null) {
-            $query->where('is_active', $status === 'active');
+            $query->where('status', $status);
         }
 
         return $query->get();

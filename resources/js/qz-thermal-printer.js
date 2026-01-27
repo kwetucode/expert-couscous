@@ -191,6 +191,12 @@ class ThermalPrinter {
         const width = this.paperWidth;
         const separator = '-'.repeat(width);
         const doubleSeparator = '='.repeat(width);
+        
+        // Debug: Log des données reçues
+        console.log('[QZ Tray] generateESCPOSCommands data:', JSON.stringify(data, null, 2));
+        
+        // Utiliser la devise fournie dans les données ou CDF par défaut
+        const currency = data.currency || 'CDF';
 
         const commands = [];
 
@@ -246,7 +252,14 @@ class ThermalPrinter {
         commands.push(ESC + 'E' + '\x00'); // Gras OFF
 
         // Lignes du tableau
-        data.items.forEach((item) => {
+        data.items.forEach((item, index) => {
+            console.log(`[QZ Tray] Item ${index}:`, {
+                name: item.name,
+                quantity: item.quantity,
+                unit_price: item.unit_price,
+                total: item.total
+            });
+            
             // Nom du produit
             const maxNameLength = width - 2;
             const name = this.truncateText(item.name, maxNameLength);
@@ -256,6 +269,9 @@ class ThermalPrinter {
             const qty = item.quantity.toString();
             const price = this.formatPrice(item.unit_price);
             const total = this.formatPrice(item.total);
+            
+            console.log(`[QZ Tray] Formatted - qty: ${qty}, price: ${price}, total: ${total}`);
+            
             const detailLine = this.formatTableRow('', qty, price, total);
             commands.push(detailLine);
         });
@@ -264,16 +280,16 @@ class ThermalPrinter {
         commands.push(doubleSeparator + '\n');
 
         // Sous-total
-        commands.push(this.formatLine('Sous-total:', this.formatPrice(data.subtotal) + ' CDF'));
+        commands.push(this.formatLine('Sous-total:', this.formatPrice(data.subtotal) + ' ' + currency));
 
         // Remise
         if (data.discount > 0) {
-            commands.push(this.formatLine('Remise:', '-' + this.formatPrice(data.discount) + ' CDF'));
+            commands.push(this.formatLine('Remise:', '-' + this.formatPrice(data.discount) + ' ' + currency));
         }
 
         // Taxe
         if (data.tax > 0) {
-            commands.push(this.formatLine('Taxe:', this.formatPrice(data.tax) + ' CDF'));
+            commands.push(this.formatLine('Taxe:', this.formatPrice(data.tax) + ' ' + currency));
         }
 
         // Ligne de séparation forte
@@ -284,7 +300,7 @@ class ThermalPrinter {
         commands.push(ESC + 'E' + '\x01'); // Gras ON
         commands.push(GS + '!' + '\x11');  // Double hauteur/largeur
         commands.push('TOTAL\n');
-        commands.push(this.formatPrice(data.total) + ' CDF\n');
+        commands.push(this.formatPrice(data.total) + ' ' + currency + '\n');
         commands.push(GS + '!' + '\x00');  // Taille normale
         commands.push(ESC + 'E' + '\x00'); // Gras OFF
         commands.push(ESC + 'a' + '\x00'); // Alignement gauche
@@ -293,12 +309,12 @@ class ThermalPrinter {
         commands.push(doubleSeparator + '\n');
 
         // Montant payé
-        commands.push(this.formatLine('Montant paye:', this.formatPrice(data.paid) + ' CDF'));
+        commands.push(this.formatLine('Montant paye:', this.formatPrice(data.paid) + ' ' + currency));
 
         // Monnaie rendue
         if (data.change > 0) {
             commands.push(ESC + 'E' + '\x01'); // Gras ON
-            commands.push(this.formatLine('Monnaie rendue:', this.formatPrice(data.change) + ' CDF'));
+            commands.push(this.formatLine('Monnaie rendue:', this.formatPrice(data.change) + ' ' + currency));
             commands.push(ESC + 'E' + '\x00'); // Gras OFF
         }
 
@@ -350,21 +366,21 @@ class ThermalPrinter {
     formatTableRow(col1, col2, col3, col4) {
         const width = this.paperWidth;
 
-        // Définir les largeurs de colonnes
-        // Pour 32 caractères: Article(12), Qte(4), P.U.(8), Total(8)
-        // Pour 48 caractères: Article(20), Qte(6), P.U.(11), Total(11)
+        // Définir les largeurs de colonnes (optimisé pour tenir sur une ligne)
+        // Pour 32 caractères: Article(8), Qte(6), P.U.(8), Total(10)
+        // Pour 48 caractères: Article(16), Qte(8), P.U.(11), Total(13)
         let col1Width, col2Width, col3Width, col4Width;
 
         if (width <= 32) {
-            col1Width = 12;
-            col2Width = 4;
-            col3Width = 8;
-            col4Width = 8;
+            col1Width = 8;   // ARTICLE réduit
+            col2Width = 6;   // QTE
+            col3Width = 8;   // P.U
+            col4Width = 10;  // TOTAL
         } else {
-            col1Width = 20;
-            col2Width = 6;
+            col1Width = 16;
+            col2Width = 8;
             col3Width = 11;
-            col4Width = 11;
+            col4Width = 13;
         }
 
         // Tronquer et aligner les colonnes
@@ -397,9 +413,10 @@ class ThermalPrinter {
      */
     formatPrice(amount) {
         // Convertir en string sans formatage pour éviter les problèmes d'encodage
-        const str = Math.floor(amount).toString();
-        // Utiliser uniquement des caractères ASCII de base
-        return str + 'CDF';
+        const num = parseFloat(amount) || 0;
+        const str = Math.floor(num).toString();
+        // Retourner uniquement le nombre, la devise sera ajoutée séparément
+        return str;
     }
 
     /**

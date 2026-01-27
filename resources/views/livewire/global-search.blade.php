@@ -303,7 +303,7 @@
                                                 <div class="flex items-center gap-2 text-xs text-gray-500">
                                                     <span>{{ $sale->client?->name ?? 'Client inconnu' }}</span>
                                                     <span>•</span>
-                                                    <span>{{ number_format($sale->total, 0, ',', ' ') }} FCFA</span>
+                                                    <span>{{ number_format($sale->total, 0, ',', ' ') }} {{ current_currency() }}</span>
                                                 </div>
                                             </div>
                                             <svg class="w-4 h-4 text-gray-400 group-hover:text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">

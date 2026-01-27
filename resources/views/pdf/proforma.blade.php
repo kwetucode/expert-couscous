@@ -375,15 +375,15 @@
                                 @endif
                             </td>
                             <td class="text-center">{{ $item->quantity }}</td>
-                            <td class="text-right">{{ number_format($item->unit_price, 0, ',', ' ') }} CDF</td>
+                            <td class="text-right">{{ format_currency($item->unit_price) }}</td>
                             <td class="text-right">
                                 @if($item->discount > 0)
-                                    <span class="discount">-{{ number_format($item->discount, 0, ',', ' ') }} CDF</span>
+                                    <span class="discount">-{{ format_currency($item->discount) }}</span>
                                 @else
                                     -
                                 @endif
                             </td>
-                            <td class="text-right">{{ number_format($item->total, 0, ',', ' ') }} CDF</td>
+                            <td class="text-right">{{ format_currency($item->total) }}</td>
                         </tr>
                     @endforeach
                 </tbody>
@@ -395,23 +395,23 @@
             <table class="totals-table">
                 <tr>
                     <td class="label">Sous-total:</td>
-                    <td class="value">{{ number_format($proforma->subtotal, 0, ',', ' ') }} CDF</td>
+                    <td class="value">{{ format_currency($proforma->subtotal) }}</td>
                 </tr>
                 @if($proforma->discount > 0)
                     <tr>
                         <td class="label">Remise globale:</td>
-                        <td class="value discount">-{{ number_format($proforma->discount, 0, ',', ' ') }} CDF</td>
+                        <td class="value discount">-{{ format_currency($proforma->discount) }}</td>
                     </tr>
                 @endif
                 @if($proforma->tax_amount > 0)
                     <tr>
                         <td class="label">Taxes ({{ $proforma->tax_rate }}%):</td>
-                        <td class="value">{{ number_format($proforma->tax_amount, 0, ',', ' ') }} CDF</td>
+                        <td class="value">{{ format_currency($proforma->tax_amount) }}</td>
                     </tr>
                 @endif
                 <tr class="total-row">
                     <td class="label" style="color: white;">TOTAL:</td>
-                    <td class="value">{{ number_format($proforma->total, 0, ',', ' ') }} CDF</td>
+                    <td class="value">{{ format_currency($proforma->total) }}</td>
                 </tr>
             </table>
         </div>

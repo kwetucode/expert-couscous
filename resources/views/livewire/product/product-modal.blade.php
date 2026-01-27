@@ -179,7 +179,7 @@
                                     <div>
                                         <label for="form.cost_price"
                                             class="block text-sm font-medium text-gray-700 mb-2">
-                                            Prix d'achat (CDF)
+                                            Prix d'achat ({{ current_currency() }})
                                         </label>
                                         <input type="number" id="form.cost_price" wire:model.live="form.cost_price"
                                             step="0.01" min="0" placeholder="0"
@@ -199,7 +199,7 @@
                                     <!-- Price -->
                                     <div>
                                         <label for="form.price" class="block text-sm font-medium text-gray-700 mb-2">
-                                            Prix de vente (CDF) <span class="text-red-500">*</span>
+                                            Prix de vente ({{ current_currency() }}) <span class="text-red-500">*</span>
                                         </label>
                                         <input type="number" id="form.price" wire:model.live="form.price"
                                             step="0.01" min="0" placeholder="0"
@@ -265,7 +265,7 @@
                                     <div>
                                         <label for="form.max_discount_amount"
                                             class="block text-sm font-medium text-gray-700 mb-2">
-                                            Remise max autorisée (CDF)
+                                            Remise max autorisée ({{ current_currency() }})
                                             <span class="text-gray-400 font-normal text-xs ml-1">(optionnel)</span>
                                         </label>
                                         <div class="relative">
@@ -305,7 +305,7 @@
                                                     </svg>
                                                     <span class="text-sm text-amber-700">
                                                         Prix minimum de vente:
-                                                        <strong>{{ number_format(max(0, $form->price - $form->max_discount_amount), 0, ',', ' ') }} CDF</strong>
+                                                        <strong>{{ number_format(max(0, $form->price - $form->max_discount_amount), 0, ',', ' ') }} {{ current_currency() }}</strong>
                                                     </span>
                                                 </div>
                                             </div>

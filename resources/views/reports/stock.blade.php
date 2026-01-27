@@ -26,7 +26,7 @@
                 <div class="summary-label">Quantité Totale</div>
             </td>
             <td style="width: 20%; text-align: center; background: #f9fafb; padding: 15px; border: 1px solid #e5e7eb;">
-                <div class="summary-value money">{{ number_format($totals['total_value'], 0, ',', ' ') }} FCFA</div>
+                <div class="summary-value money">{{ number_format($totals['total_value'], 0, ',', ' ') }} {{ current_currency() }}</div>
                 <div class="summary-label">Valeur Stock</div>
             </td>
             <td style="width: 20%; text-align: center; background: #fee2e2; padding: 15px; border: 1px solid #fecaca;">
@@ -77,7 +77,7 @@
                 </td>
                 <td class="text-center">{{ $variant->low_stock_threshold }}</td>
                 <td class="text-right money">{{ number_format($variant->product->cost_price ?? 0, 0, ',', ' ') }}</td>
-                <td class="text-right money">{{ number_format($variant->stock_quantity * ($variant->product->cost_price ?? 0), 0, ',', ' ') }} FCFA</td>
+                <td class="text-right money">{{ number_format($variant->stock_quantity * ($variant->product->cost_price ?? 0), 0, ',', ' ') }} {{ current_currency() }}</td>
             </tr>
             @endforeach
         </tbody>
@@ -87,7 +87,7 @@
                 <td class="text-center">{{ number_format($totals['total_stock'], 0, ',', ' ') }}</td>
                 <td></td>
                 <td></td>
-                <td class="text-right money">{{ number_format($totals['total_value'], 0, ',', ' ') }} FCFA</td>
+                <td class="text-right money">{{ number_format($totals['total_value'], 0, ',', ' ') }} {{ current_currency() }}</td>
             </tr>
         </tfoot>
     </table>

@@ -167,13 +167,13 @@
                 @if($proforma->discount > 0)
                 <div class="detail-row">
                     <span class="detail-label">Remise</span>
-                    <span class="detail-value" style="color: #dc2626;">-{{ number_format($proforma->discount, 0, ',', ' ') }} CDF</span>
+                    <span class="detail-value" style="color: #dc2626;">-{{ number_format($proforma->discount, 0, ',', ' ') }} {{ current_currency() }}</span>
                 </div>
                 @endif
                 <div class="total-row">
                     <div class="detail-row" style="border: none; padding: 0;">
                         <span class="detail-label">Total</span>
-                        <span class="detail-value">{{ number_format($proforma->total, 0, ',', ' ') }} CDF</span>
+                        <span class="detail-value">{{ number_format($proforma->total, 0, ',', ' ') }} {{ current_currency() }}</span>
                     </div>
                 </div>
             </div>

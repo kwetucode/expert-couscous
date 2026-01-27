@@ -192,7 +192,7 @@
                             <x-form.error name="form.unit_price" />
                             <template x-if="selectedVariantId && productCost > 0">
                                 <p class="mt-1 text-xs text-gray-500">
-                                    Prix d'achat actuel du produit : <span class="font-semibold text-indigo-600" x-text="new Intl.NumberFormat('fr-FR').format(productCost) + ' FCFA'"></span>
+                                    Prix d'achat actuel du produit : <span class="font-semibold text-indigo-600" x-text="new Intl.NumberFormat('fr-FR').format(productCost) + ' {{ current_currency() }}'"></span>
                                 </p>
                             </template>
                         </div>

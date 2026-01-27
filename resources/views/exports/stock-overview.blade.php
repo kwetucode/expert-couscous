@@ -116,7 +116,7 @@
         <div class="kpi-row">
             <div class="kpi-cell">
                 <div class="kpi-label">Valeur Totale du Stock</div>
-                <div class="kpi-value">{{ number_format($kpis['total_stock_value'], 0, ',', ' ') }} CDF</div>
+                <div class="kpi-value">{{ number_format($kpis['total_stock_value'], 0, ',', ' ') }} {{ current_currency() }}</div>
             </div>
             <div class="kpi-cell">
                 <div class="kpi-label">Articles en Stock</div>
@@ -124,11 +124,11 @@
             </div>
             <div class="kpi-cell">
                 <div class="kpi-label">Valeur de Vente Potentielle</div>
-                <div class="kpi-value">{{ number_format($kpis['total_retail_value'], 0, ',', ' ') }} CDF</div>
+                <div class="kpi-value">{{ number_format($kpis['total_retail_value'], 0, ',', ' ') }} {{ current_currency() }}</div>
             </div>
             <div class="kpi-cell">
                 <div class="kpi-label">Profit Potentiel</div>
-                <div class="kpi-value">{{ number_format($kpis['potential_profit'], 0, ',', ' ') }} CDF</div>
+                <div class="kpi-value">{{ number_format($kpis['potential_profit'], 0, ',', ' ') }} {{ current_currency() }}</div>
             </div>
         </div>
     </div>
@@ -159,8 +159,8 @@
                     <td>{{ $variant->sku ?? 'N/A' }}</td>
                     <td class="text-center"><strong>{{ $variant->stock_quantity }}</strong></td>
                     <td class="text-center">{{ $variant->low_stock_threshold }}</td>
-                    <td class="text-right">{{ number_format($variant->product->cost_price, 0, ',', ' ') }} CDF</td>
-                    <td class="text-right"><strong>{{ number_format($variant->stock_quantity * $variant->product->cost_price, 0, ',', ' ') }} CDF</strong></td>
+                    <td class="text-right">{{ number_format($variant->product->cost_price, 0, ',', ' ') }} {{ current_currency() }}</td>
+                    <td class="text-right"><strong>{{ number_format($variant->stock_quantity * $variant->product->cost_price, 0, ',', ' ') }} {{ current_currency() }}</strong></td>
                     <td class="text-center">
                         @if($variant->isOutOfStock())
                             <span class="status-badge status-out">Rupture</span>

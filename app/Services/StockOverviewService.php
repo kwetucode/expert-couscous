@@ -269,7 +269,7 @@ class StockOverviewService
         }
 
         $stockValue = $variant->stock_quantity * ($variant->product->cost_price ?? 0);
-        $retailValue = $variant->stock_quantity * ($variant->product->selling_price ?? 0);
+        $retailValue = $variant->stock_quantity * ($variant->product->price ?? 0);
         $potentialProfit = $retailValue - $stockValue;
 
         return [

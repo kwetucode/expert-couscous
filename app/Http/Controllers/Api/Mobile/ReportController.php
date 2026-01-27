@@ -369,17 +369,18 @@ class ReportController extends Controller
     }
 
     /**
-     * Format currency (CDF)
+     * Format currency (using organization currency)
      */
     private function formatCurrency(float $amount): string
     {
-        // Formatage en CDF (Franc Congolais)
+        $currency = current_currency();
+        
         if ($amount >= 1000000) {
-            return number_format($amount / 1000000, 1, ',', ' ') . 'M CDF';
+            return number_format($amount / 1000000, 1, ',', ' ') . 'M ' . $currency;
         }
         if ($amount >= 1000) {
-            return number_format($amount / 1000, 1, ',', ' ') . 'K CDF';
+            return number_format($amount / 1000, 1, ',', ' ') . 'K ' . $currency;
         }
-        return number_format($amount, 0, ',', ' ') . ' CDF';
+        return number_format($amount, 0, ',', ' ') . ' ' . $currency;
     }
 }

@@ -1,10 +1,17 @@
-<div x-data="{ showDeleteModal: false, purchaseToDelete: null, purchaseNumber: '', showReceiveModal: false, purchaseToReceive: null, receiveNumber: '', showCancelModal: false, purchaseToCancel: null, cancelNumber: '', showRestoreModal: false, purchaseToRestore: null, restoreNumber: '', showDetailsModal: false, purchaseDetails: null }">
+<div x-data="{ showDeleteModal: false, purchaseToDelete: null, purchaseNumber: '', showReceiveModal: false, purchaseToReceive: null, receiveNumber: '', showCancelModal: false, purchaseToCancel: null, cancelNumber: '', showRestoreModal: false, purchaseToRestore: null, restoreNumber: '', showDetailsModal: false, purchaseDetails: null, showModal: false }"
+    @open-email-modal.window="showModal = true"
+    @close-email-modal.window="showModal = false"
+>
 <x-slot name="header">
     <x-breadcrumb :items="[
         ['label' => 'Accueil', 'url' => route('dashboard')],
         ['label' => 'Achats']
     ]" />
 
+
+</x-slot>
+
+<div class="space-y-4">
     <div class="flex items-center justify-between mt-4">
         <div>
             <h1 class="text-3xl font-bold text-gray-900">Gestion des Achats</h1>
@@ -16,49 +23,74 @@
             </x-form.button>
         </div>
     </div>
-</x-slot>
-
-<div class="space-y-4">
     <!-- Statistics Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <x-stat-card
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <x-kpi-card
             title="Achats Réceptionnés"
             :value="$stats['total_purchases']"
             color="green">
-            <x-slot name="icon">
+            <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </x-slot>
-        </x-stat-card>
-        <x-stat-card
+            </svg>
+        </x-kpi-card>
+        <x-kpi-card
             title="Montant Total"
-            :value="number_format($stats['total_amount'], 0, ',', ' ') . ' CDF'"
+            :value="format_currency($stats['total_amount'])"
             color="indigo">
-            <x-slot name="icon">
+            <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </x-slot>
-        </x-stat-card>
-        <x-stat-card
+            </svg>
+        </x-kpi-card>
+        <x-kpi-card
             title="Achats en Attente"
             :value="$stats['pending_purchases']"
-            color="amber">
-            <x-slot name="icon">
+            color="orange">
+            <svg class="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </x-slot>
-        </x-stat-card>
-        <x-stat-card
+            </svg>
+        </x-kpi-card>
+        <x-kpi-card
             title="Montant en Attente"
-            :value="number_format($stats['pending_amount'], 0, ',', ' ') . ' CDF'"
-            color="gray">
-            <x-slot name="icon">
+            :value="format_currency($stats['pending_amount'])"
+            color="purple">
+            <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
-            </x-slot>
-        </x-stat-card>
+            </svg>
+        </x-kpi-card>
     </div>
 
     <!-- Filters Card -->
     <x-card>
         <div class="flex items-center justify-between mb-4">
             <h2 class="text-lg font-semibold text-gray-900">Filtres</h2>
+            <div class="flex items-center space-x-2">
+                <!-- Period Filter Dropdown -->
+                <x-form.select wire:model.live="periodFilter" class="w-48">
+                    <option value="today">Aujourd'hui</option>
+                    <option value="yesterday">Hier</option>
+                    <option value="this_week">Cette semaine</option>
+                    <option value="last_week">Semaine dernière</option>
+                    <option value="this_month">Ce mois</option>
+                    <option value="last_month">Mois dernier</option>
+                    <option value="last_3_months">3 derniers mois</option>
+                    <option value="last_6_months">6 derniers mois</option>
+                    <option value="this_year">Cette année</option>
+                    <option value="last_year">Année dernière</option>
+                    <option value="all">Toutes les dates</option>
+                    <option value="custom">Personnalisé</option>
+                </x-form.select>
+
+                <!-- Export Buttons -->
+                <x-form.button wire:click="exportPdf" variant="secondary" size="sm" icon="document">
+                    PDF
+                </x-form.button>
+                <x-form.button wire:click="exportExcel" variant="secondary" size="sm" icon="download">
+                    Excel
+                </x-form.button>
+                <x-form.button wire:click="openEmailModal" variant="secondary" size="sm" icon="mail">
+                    Email
+                </x-form.button>
+            </div>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-6 gap-4">
@@ -101,6 +133,21 @@
                 <x-form.input wire:model.live="dateTo" type="date" placeholder="Date fin" />
             </div>
         </div>
+
+        <!-- Period indicator -->
+        @if($periodFilter && $periodFilter !== 'custom')
+        <div class="mt-4 flex items-center">
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-indigo-100 text-indigo-800">
+                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                {{ $this->getPeriodLabel() }}
+                @if($dateFrom && $dateTo)
+                    : {{ \Carbon\Carbon::parse($dateFrom)->format('d/m/Y') }} - {{ \Carbon\Carbon::parse($dateTo)->format('d/m/Y') }}
+                @endif
+            </span>
+        </div>
+        @endif
     </x-card>
 
     <!-- Purchases Table -->
@@ -163,7 +210,7 @@
                                 <div class="text-sm text-gray-900">{{ $purchase->supplier->name }}</div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm font-semibold text-gray-900">{{ number_format($purchase->total, 0, ',', ' ') }} CDF</div>
+                                <div class="text-sm font-semibold text-gray-900">{{ number_format($purchase->total, 0, ',', ' ') }} {{ current_currency() }}</div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 @if ($purchase->status === 'received')
@@ -458,7 +505,7 @@
                         </div>
                         <div class="bg-gray-50 rounded-lg p-4">
                             <p class="text-xs font-medium text-gray-500 mb-1">Montant total</p>
-                            <p class="text-sm font-bold text-indigo-600">{{ number_format($selectedPurchase->total, 0, ',', ' ') }} CDF</p>
+                            <p class="text-sm font-bold text-indigo-600">{{ number_format($selectedPurchase->total, 0, ',', ' ') }} {{ current_currency() }}</p>
                         </div>
                     </div>
 
@@ -483,15 +530,15 @@
                                             <div class="text-xs text-gray-500">SKU: {{ $item->productVariant->sku }}</div>
                                         </td>
                                         <td class="px-4 py-3 text-right text-sm text-gray-900">{{ $item->quantity }}</td>
-                                        <td class="px-4 py-3 text-right text-sm text-gray-900">{{ number_format($item->unit_price, 0, ',', ' ') }} CDF</td>
-                                        <td class="px-4 py-3 text-right text-sm font-semibold text-gray-900">{{ number_format($item->subtotal, 0, ',', ' ') }} CDF</td>
+                                        <td class="px-4 py-3 text-right text-sm text-gray-900">{{ number_format($item->unit_price, 0, ',', ' ') }} {{ current_currency() }}</td>
+                                        <td class="px-4 py-3 text-right text-sm font-semibold text-gray-900">{{ number_format($item->subtotal, 0, ',', ' ') }} {{ current_currency() }}</td>
                                     </tr>
                                     @endforeach
                                 </tbody>
                                 <tfoot class="bg-gray-50">
                                     <tr>
                                         <td colspan="3" class="px-4 py-3 text-right text-sm font-semibold text-gray-900">Total:</td>
-                                        <td class="px-4 py-3 text-right text-base font-bold text-indigo-600">{{ number_format($selectedPurchase->total, 0, ',', ' ') }} CDF</td>
+                                        <td class="px-4 py-3 text-right text-base font-bold text-indigo-600">{{ number_format($selectedPurchase->total, 0, ',', ' ') }} {{ current_currency() }}</td>
                                     </tr>
                                 </tfoot>
                             </table>
@@ -518,5 +565,91 @@
             @endif
         </div>
     </div>
+
+    <!-- Email Modal -->
+    <x-ui.alpine-modal name="email-modal" title="Envoyer le rapport par email" icon="envelope" maxWidth="lg" x-model="showModal">
+        <x-ui.alpine-modal-body>
+            <div class="space-y-4">
+                <!-- Period info -->
+                <div class="bg-indigo-50 rounded-lg p-4">
+                    <div class="flex items-center space-x-3">
+                        <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <div>
+                            <p class="text-sm font-medium text-indigo-900">Période sélectionnée</p>
+                            <p class="text-sm text-indigo-700">
+                                {{ $this->getPeriodLabel() }}
+                                @if($dateFrom && $dateTo)
+                                    ({{ \Carbon\Carbon::parse($dateFrom)->format('d/m/Y') }} - {{ \Carbon\Carbon::parse($dateTo)->format('d/m/Y') }})
+                                @endif
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- User selection -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <x-form.form-group label="Destinataire 1" for="selectedUser" required>
+                        <x-form.select wire:model="selectedUserId" id="selectedUser">
+                            <option value="">-- Sélectionner un utilisateur --</option>
+                            @foreach($this->users as $user)
+                                <option value="{{ $user->id }}">{{ $user->name }} ({{ $user->email }})</option>
+                            @endforeach
+                        </x-form.select>
+                        <x-form.input-error for="selectedUserId" />
+                    </x-form.form-group>
+
+                    <x-form.form-group label="Destinataire 2 (optionnel)" for="selectedUser2">
+                        <x-form.select wire:model="selectedUserId2" id="selectedUser2">
+                            <option value="">-- Aucun --</option>
+                            @foreach($this->users as $user)
+                                <option value="{{ $user->id }}">{{ $user->name }} ({{ $user->email }})</option>
+                            @endforeach
+                        </x-form.select>
+                        <x-form.input-error for="selectedUserId2" />
+                    </x-form.form-group>
+                </div>
+
+                <!-- Files info -->
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <p class="text-sm font-medium text-gray-700 mb-3">Pièces jointes incluses :</p>
+                    <div class="space-y-2">
+                        <div class="flex items-center space-x-3">
+                            <div class="flex-shrink-0 w-8 h-8 bg-red-100 rounded flex items-center justify-center">
+                                <svg class="w-4 h-4 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd" />
+                                </svg>
+                            </div>
+                            <span class="text-sm text-gray-600">rapport_achats.pdf</span>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <div class="flex-shrink-0 w-8 h-8 bg-green-100 rounded flex items-center justify-center">
+                                <svg class="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd" />
+                                </svg>
+                            </div>
+                            <span class="text-sm text-gray-600">rapport_achats.xlsx</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </x-ui.alpine-modal-body>
+
+        <div class="flex-shrink-0 flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-200 bg-gray-50 rounded-b-2xl">
+            <x-form.button type="button" variant="secondary" @click="showModal = false">
+                Annuler
+            </x-form.button>
+            <x-form.button type="button" variant="primary" wire:click="sendReportEmail" wire:loading.attr="disabled">
+                <span wire:loading wire:target="sendReportEmail" class="mr-2">
+                    <svg class="animate-spin h-4 w-4 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                </span>
+                Envoyer
+            </x-form.button>
+        </div>
+    </x-ui.alpine-modal>
 </div>
 </div>

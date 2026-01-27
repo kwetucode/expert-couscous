@@ -1,7 +1,19 @@
 import './bootstrap';
 import Alpine from 'alpinejs';
 import focus from '@alpinejs/focus';
+import collapse from '@alpinejs/collapse';
 import Chart from 'chart.js/auto';
+
+// Vue.js imports
+import { createApp } from 'vue';
+import { createPinia } from 'pinia';
+import PosCart from './components/PosCart.vue';
+
+// Import Alpine stores
+import posCartStore from './alpine/stores/posCart.js';
+import toastStore from './alpine/stores/toast.js';
+
+console.log('[App] Stores imported:', { posCartStore, toastStore });
 
 // ============================================
 // Alpine.js Configuration
@@ -9,13 +21,24 @@ import Chart from 'chart.js/auto';
 
 // Register Alpine plugins BEFORE making it available
 Alpine.plugin(focus);
+Alpine.plugin(collapse);
 
-// Make Alpine available globally for Livewire
+// Register stores IMMEDIATELY before Livewire starts
+Alpine.store('posCart', posCartStore);
+Alpine.store('toast', toastStore);
+
+console.log('[App] Stores registered BEFORE window.Alpine');
+console.log('[App] posCart available:', !!Alpine.store('posCart'));
+console.log('[App] toast available:', !!Alpine.store('toast'));
+
+// Make Alpine available globally for Livewire FIRST
 // NOTE: Do NOT call Alpine.start() - Livewire 3 handles this automatically
 window.Alpine = Alpine;
 
 // Make Chart.js available globally
 window.Chart = Chart;
+
+console.log('[App] Alpine available on window');
 
 // ============================================
 // Livewire Navigation Events
@@ -61,36 +84,69 @@ document.addEventListener('livewire:navigated', () => {
 // Global Alpine Components & Stores
 // ============================================
 
-// Global toast store for notifications
+// BACKUP: Also register in alpine:init for safety
 document.addEventListener('alpine:init', () => {
-    Alpine.store('toast', {
-        show: false,
-        message: '',
-        type: 'success',
+    console.log('[Alpine:Init] Event fired - stores should already be registered');
+    console.log('[Alpine:Init] posCart exists:', !!Alpine.store('posCart'));
+    console.log('[Alpine:Init] toast exists:', !!Alpine.store('toast'));
 
-        success(message) {
-            this.showToast(message, 'success');
-        },
-
-        error(message) {
-            this.showToast(message, 'error');
-        },
-
-        warning(message) {
-            this.showToast(message, 'warning');
-        },
-
-        showToast(message, type = 'success') {
-            this.message = message;
-            this.type = type;
-            this.show = true;
-
-            setTimeout(() => {
-                this.show = false;
-            }, 5000);
-        }
-    });
+    // Re-register if missing (shouldn't happen but safety net)
+    if (!Alpine.store('posCart')) {
+        console.warn('[Alpine:Init] posCart missing, registering now!');
+        Alpine.store('posCart', posCartStore);
+    }
+    if (!Alpine.store('toast')) {
+        console.warn('[Alpine:Init] toast missing, registering now!');
+        Alpine.store('toast', toastStore);
+    }
 });
 
-// Log for debugging
-console.log('STK App loaded - Livewire 3 + Alpine.js');
+// ============================================
+// Vue.js POS Components
+// ============================================
+
+// Function to initialize Vue POS components
+async function initVuePosComponents() {
+    const posCartElement = document.getElementById('vue-pos-cart');
+    const posPaymentElement = document.getElementById('vue-pos-payment');
+
+    if (posCartElement || posPaymentElement) {
+        // Check if already mounted to avoid double mounting
+        if (posCartElement && posCartElement.__vue_app__) {
+            console.log('[Vue POS] Cart already mounted, skipping...');
+            return;
+        }
+
+        const pinia = createPinia();
+
+        if (posCartElement) {
+            const clients = JSON.parse(posCartElement.dataset.clients || '[]');
+            const currency = posCartElement.dataset.currency || 'USD';
+
+            const cartApp = createApp(PosCart, { clients, currency });
+            cartApp.use(pinia);
+            cartApp.mount('#vue-pos-cart');
+            
+            // Expose store globally for Alpine integration
+            const { usePosStore } = await import('./stores/posStore.js');
+            window.__VUE_POS_STORE__ = usePosStore(pinia);
+            console.log('[Vue POS] Store exposed globally:', window.__VUE_POS_STORE__);
+        }
+
+        if (posPaymentElement && !posPaymentElement.__vue_app__) {
+            const paymentApp = createApp(PosPayment);
+            paymentApp.use(pinia);
+            paymentApp.mount('#vue-pos-payment');
+        }
+    }
+}
+
+// Initialize Vue components on DOMContentLoaded
+document.addEventListener('DOMContentLoaded', initVuePosComponents);
+
+// Re-initialize Vue components after Livewire SPA navigation
+document.addEventListener('livewire:navigated', () => {
+    console.log('[Vue POS] Livewire navigated, re-initializing...');
+    // Small delay to ensure DOM is ready
+    setTimeout(initVuePosComponents, 50);
+});

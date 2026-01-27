@@ -212,5 +212,11 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::post('/{id}/receive', [TransferApiController::class, 'receive'])->name('receive');
             Route::post('/{id}/cancel', [TransferApiController::class, 'cancel'])->name('cancel');
         });
+
+        // ===== POS API Routes =====
+        Route::prefix('pos')->name('pos.')->group(function () {
+            // Créer une vente depuis le POS
+            Route::post('/sales', [\App\Http\Controllers\Api\Mobile\MobileSalesController::class, 'checkout'])->name('sales.create');
+        });
         });
 });

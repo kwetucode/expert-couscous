@@ -64,14 +64,32 @@ class SalesReportNotification extends Notification
      */
     public function toMail(object $notifiable): MailMessage
     {
+        $currency = $this->getCurrency();
+        
         return (new MailMessage)
             ->subject("Rapport de ventes - {$this->store->name}")
             ->greeting("Bonjour {$notifiable->name},")
             ->line($this->getMessage())
-            ->line("Montant total: " . number_format($this->salesData['total_amount'] ?? 0, 0, ',', ' ') . " CDF")
+            ->line("Montant total: " . number_format($this->salesData['total_amount'] ?? 0, 0, ',', ' ') . " {$currency}")
             ->line("Nombre de ventes: " . ($this->salesData['total_sales'] ?? 0))
             ->action('Voir le tableau de bord', url('/dashboard'))
             ->salutation('L\'équipe STK');
+    }
+
+    /**
+     * Get the currency from the store's organization
+     */
+    private function getCurrency(): string
+    {
+        return $this->store->organization?->currency ?? config('app.default_currency', 'FCFA');
+    }
+
+    /**
+     * Format amount with the store's organization currency
+     */
+    private function formatAmount(float $amount): string
+    {
+        return number_format($amount, 0, ',', ' ') . ' ' . $this->getCurrency();
     }
 
     /**
@@ -80,14 +98,14 @@ class SalesReportNotification extends Notification
     private function getMessage(): string
     {
         $storeName = $this->store->name;
-        $totalAmount = number_format((float) ($this->salesData['total_amount'] ?? 0), 0, ',', ' ');
+        $totalAmount = $this->formatAmount((float) ($this->salesData['total_amount'] ?? 0));
         $totalSales = $this->salesData['total_sales'] ?? 0;
 
         return match ($this->reportType) {
-            'hourly' => "📊 {$storeName}: {$totalSales} vente(s) cette heure - {$totalAmount} CDF",
-            'milestone' => "🎉 {$storeName} a atteint {$totalAmount} CDF de ventes aujourd'hui!",
-            'daily' => "📈 Résumé journalier {$storeName}: {$totalSales} ventes - {$totalAmount} CDF",
-            'new_sale' => "💰 Nouvelle vente à {$storeName}: {$totalAmount} CDF",
+            'hourly' => "📊 {$storeName}: {$totalSales} vente(s) cette heure - {$totalAmount}",
+            'milestone' => "🎉 {$storeName} a atteint {$totalAmount} de ventes aujourd'hui!",
+            'daily' => "📈 Résumé journalier {$storeName}: {$totalSales} ventes - {$totalAmount}",
+            'new_sale' => "💰 Nouvelle vente à {$storeName}: {$totalAmount}",
             default => "Rapport de ventes pour {$storeName}",
         };
     }

@@ -46,19 +46,20 @@ class CalculationService
             return $breakdown;
         }
 
+        $currency = current_currency();
         $denominations = [
-            20000 => '20,000 CDF',
-            10000 => '10,000 CDF',
-            5000 => '5,000 CDF',
-            1000 => '1,000 CDF',
-            500 => '500 CDF',
-            200 => '200 CDF',
-            100 => '100 CDF',
-            50 => '50 CDF',
-            20 => '20 CDF',
-            10 => '10 CDF',
-            5 => '5 CDF',
-            1 => '1 CDF',
+            20000 => "20,000 {$currency}",
+            10000 => "10,000 {$currency}",
+            5000 => "5,000 {$currency}",
+            1000 => "1,000 {$currency}",
+            500 => "500 {$currency}",
+            200 => "200 {$currency}",
+            100 => "100 {$currency}",
+            50 => "50 {$currency}",
+            20 => "20 {$currency}",
+            10 => "10 {$currency}",
+            5 => "5 {$currency}",
+            1 => "1 {$currency}",
         ];
 
         foreach ($denominations as $value => $label) {
@@ -114,7 +115,7 @@ class CalculationService
         if ($paidAmount < $total) {
             return [
                 'valid' => false,
-                'message' => 'Montant payé insuffisant. Manque: ' . number_format($total - $paidAmount, 2) . ' CDF',
+                'message' => 'Montant payé insuffisant. Manque: ' . format_currency($total - $paidAmount, 2),
             ];
         }
 

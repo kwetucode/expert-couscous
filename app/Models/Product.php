@@ -72,10 +72,12 @@ class Product extends Model
 
     /**
      * Get the category that owns the product.
+     * Note: We use withoutGlobalScope to allow categories from any organization
+     * since categories can be shared or belong to different organizations.
      */
     public function category(): BelongsTo
     {
-        return $this->belongsTo(Category::class);
+        return $this->belongsTo(Category::class)->withoutGlobalScope('organization');
     }
 
     /**

@@ -208,6 +208,24 @@ class MenuItemSeeder extends Seeder
                     ['name' => 'Créer une organisation', 'code' => 'organizations.create', 'route' => 'organizations.create', 'order' => 2],
                 ],
             ],
+
+            // === RAPPORTS ===
+            [
+                'name' => 'Rapports',
+                'code' => 'reports',
+                'section' => 'Rapports',
+                'icon' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>',
+                'order' => 1,
+                'roles' => ['super-admin', 'admin', 'manager'],
+                'children' => [
+                    ['name' => 'Rapport Produits', 'code' => 'reports.products', 'route' => 'reports.products', 'order' => 1],
+                    ['name' => 'Rapport Stock', 'code' => 'reports.stock', 'route' => 'reports.stock', 'order' => 2],
+                    ['name' => 'Mouvements de Stock', 'code' => 'reports.stock-movements', 'route' => 'reports.stock-movements', 'order' => 3],
+                    ['name' => 'Inventaire', 'code' => 'reports.inventory', 'route' => 'reports.inventory', 'order' => 4],
+                    ['name' => 'Alertes Stock', 'code' => 'reports.stock-alerts', 'route' => 'reports.stock-alerts', 'order' => 5],
+                ],
+            ],
+
             [
                 'name' => 'Abonnements',
                 'code' => 'subscriptions',

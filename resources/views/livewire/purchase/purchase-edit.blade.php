@@ -5,7 +5,14 @@
         ['label' => 'Modifier']
     ]" />
 
-    <div class="flex items-center justify-between mt-4">
+
+</x-slot>
+
+<div x-data="{ showPaymentModal: false }"
+     @payment-recorded.window="showPaymentModal = false"
+     class="max-w-7xl mx-auto">
+
+     <div class="flex items-center justify-between mt-2 mb-2">
         <div>
             <h1 class="text-3xl font-bold text-gray-900">Modifier l'Achat</h1>
             <p class="text-gray-500 mt-1">Achat N° {{ $purchase->purchase_number }}</p>
@@ -17,11 +24,7 @@
             Retour
         </a>
     </div>
-</x-slot>
 
-<div x-data="{ showPaymentModal: false }"
-     @payment-recorded.window="showPaymentModal = false"
-     class="max-w-7xl mx-auto">
     <!-- Messages de succès/erreur -->
     @if (session()->has('success'))
         <x-form.alert type="success" :message="session('success')" class="mb-6" />
@@ -77,7 +80,7 @@
                                                     </div>
                                                     <div class="text-right">
                                                         <div class="text-sm font-semibold text-indigo-600">
-                                                            {{ number_format($result['cost_price'], 0, ',', ' ') }} CDF
+                                                            {{ number_format($result['cost_price'], 0, ',', ' ') }} {{ current_currency() }}
                                                         </div>
                                                         <div class="text-xs text-gray-500">
                                                             Stock: {{ $result['stock'] }}
@@ -103,7 +106,7 @@
                                             />
                                         </x-form.form-group>
 
-                                        <x-form.form-group label="Prix d'achat (CDF)" for="selectedPrice">
+                                        <x-form.form-group label="Prix d'achat ({{ current_currency() }})" for="selectedPrice">
                                             <x-form.input
                                                 wire:model.live="selectedPrice"
                                                 type="number"
@@ -132,12 +135,12 @@
                                     <div class="flex-1">
                                         <div class="text-sm font-medium text-gray-900">{{ $item['name'] }}</div>
                                         <div class="text-xs text-gray-500 mt-1">
-                                            {{ $item['quantity'] }} x {{ number_format($item['unit_price'], 0, ',', ' ') }} CDF
+                                            {{ $item['quantity'] }} x {{ number_format($item['unit_price'], 0, ',', ' ') }} {{ current_currency() }}
                                         </div>
                                     </div>
                                     <div class="flex items-center space-x-4">
                                         <div class="text-sm font-semibold text-gray-900">
-                                            {{ number_format($item['total'], 0, ',', ' ') }} CDF
+                                            {{ number_format($item['total'], 0, ',', ' ') }} {{ current_currency() }}
                                         </div>
                                         @if($canEditItems)
                                             <button type="button"
@@ -241,9 +244,9 @@
                             <x-form.input-error for="form.paid_amount" />
                             <p class="text-xs text-gray-500 mt-1">
                                 @if($form->payment_status === 'paid')
-                                    Montant total payé (Total: {{ number_format($total, 0, ',', ' ') }} CDF)
+                                    Montant total payé (Total: {{ number_format($total, 0, ',', ' ') }} {{ current_currency() }})
                                 @else
-                                    Montant partiel déjà versé (Total: {{ number_format($total, 0, ',', ' ') }} CDF)
+                                    Montant partiel déjà versé (Total: {{ number_format($total, 0, ',', ' ') }} {{ current_currency() }})
                                 @endif
                             </p>
                         </x-form.form-group>
@@ -290,19 +293,19 @@
                             <div class="flex justify-between text-sm">
                                 <span class="text-gray-600">Total:</span>
                                 <span class="font-semibold text-gray-900">
-                                    {{ number_format($purchase->total, 0, ',', ' ') }} CDF
+                                    {{ number_format($purchase->total, 0, ',', ' ') }} {{ current_currency() }}
                                 </span>
                             </div>
                             <div class="flex justify-between text-sm">
                                 <span class="text-green-600">Payé:</span>
                                 <span class="font-semibold text-green-600">
-                                    {{ number_format($purchasePaidAmount, 0, ',', ' ') }} CDF
+                                    {{ number_format($purchasePaidAmount, 0, ',', ' ') }} {{ current_currency() }}
                                 </span>
                             </div>
                             <div class="flex justify-between text-sm pt-2 border-t border-gray-200">
                                 <span class="text-red-600">Reste:</span>
                                 <span class="font-bold text-red-600">
-                                    {{ number_format($purchaseRemainingAmount, 0, ',', ' ') }} CDF
+                                    {{ number_format($purchaseRemainingAmount, 0, ',', ' ') }} {{ current_currency() }}
                                 </span>
                             </div>
                         </div>
@@ -317,7 +320,7 @@
                                     <div class="flex justify-between items-start">
                                         <div>
                                             <div class="text-sm font-medium text-gray-900">
-                                                {{ number_format($payment->amount, 0, ',', ' ') }} CDF
+                                                {{ number_format($payment->amount, 0, ',', ' ') }} {{ current_currency() }}
                                             </div>
                                             <div class="text-xs text-gray-500">
                                                 {{ ucfirst($payment->payment_method) }} -
@@ -353,7 +356,7 @@
                                     <div class="flex justify-between text-lg font-bold">
                                         <span class="text-gray-900">Total:</span>
                                         <span class="text-indigo-600">
-                                            {{ number_format($total, 0, ',', ' ') }} CDF
+                                            {{ number_format($total, 0, ',', ' ') }} {{ current_currency() }}
                                         </span>
                                     </div>
                                 </div>

@@ -231,12 +231,12 @@
                                 </x-table.cell>
                                 <x-table.cell align="right">
                                     <span class="text-sm text-gray-900">
-                                        {{ number_format($item->unit_price, 0, ',', ' ') }} CDF
+                                        {{ format_currency($item->unit_price) }}
                                     </span>
                                 </x-table.cell>
                                 <x-table.cell align="right">
                                     <span class="text-sm font-semibold text-gray-900">
-                                        {{ number_format($item->total_price, 0, ',', ' ') }} CDF
+                                        {{ format_currency($item->total_price) }}
                                     </span>
                                 </x-table.cell>
                             </x-table.row>
@@ -248,17 +248,17 @@
                 <div class="border-t border-gray-200 mt-4 pt-4 space-y-2">
                     <div class="flex justify-between text-sm">
                         <span class="text-gray-600">Sous-total</span>
-                        <span class="text-gray-900 font-medium">{{ number_format($invoice->subtotal, 0, ',', ' ') }} CDF</span>
+                        <span class="text-gray-900 font-medium">{{ format_currency($invoice->subtotal) }}</span>
                     </div>
                     @if($invoice->tax > 0)
                         <div class="flex justify-between text-sm">
                             <span class="text-gray-600">Taxe</span>
-                            <span class="text-gray-900 font-medium">{{ number_format($invoice->tax, 0, ',', ' ') }} CDF</span>
+                            <span class="text-gray-900 font-medium">{{ format_currency($invoice->tax) }}</span>
                         </div>
                     @endif
                     <div class="flex justify-between text-lg font-semibold border-t border-gray-200 pt-2">
                         <span class="text-gray-900">Total</span>
-                        <span class="text-indigo-600">{{ number_format($invoice->total, 0, ',', ' ') }} CDF</span>
+                        <span class="text-indigo-600">{{ format_currency($invoice->total) }}</span>
                     </div>
                 </div>
             </x-card>

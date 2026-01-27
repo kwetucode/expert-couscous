@@ -121,7 +121,10 @@ Route::middleware(['auth'])->group(function () {
     });
 
     // POS - Point of Sale
-    Route::get('/pos', CashRegisterModular::class)->name('pos.cash-register')->middleware('permission:sales.create');
+    //Route::get('/pos', CashRegisterModular::class)->name('pos.cash-register')->middleware('permission:sales.create');
+    Route::get('/pos', \App\Livewire\Pos\CashRegisterAlpine::class)
+        ->name('pos.cash-register')
+        ->middleware('permission:sales.create');
 
     // Printer Configuration
 
@@ -142,6 +145,8 @@ Route::middleware(['auth'])->group(function () {
     // Reports PDF
     Route::prefix('reports')->name('reports.')->middleware('permission:reports.sales,reports.stock')->group(function () {
         Route::get('/products', [ReportController::class, 'products'])->name('products');
+        Route::get('/sales', [ReportController::class, 'sales'])->name('sales');
+        Route::get('/invoices', [ReportController::class, 'invoices'])->name('invoices');
         Route::get('/stock', [ReportController::class, 'stock'])->name('stock');
         Route::get('/stock-movements', [ReportController::class, 'stockMovements'])->name('stock-movements');
         Route::get('/inventory', [ReportController::class, 'inventory'])->name('inventory');
@@ -181,6 +186,10 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/organization/{organization}/payment', OrganizationPayment::class)
         ->name('organization.payment')
         ->where('organization', '[0-9]+');
+
+    // POS Checkout Route (authentification web/session)
+    Route::post('/pos/checkout', [\App\Http\Controllers\Pos\PosCheckoutController::class, 'checkout'])
+        ->name('pos.checkout');
 });
 
 

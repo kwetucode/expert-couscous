@@ -87,9 +87,9 @@
                             <p class="text-sm font-medium text-gray-900">
                                 {{ number_format($variant->product->cost_price ?? 0, 0, ',', ' ') }} {{ $currency }}
                             </p>
-                            @if($variant->product->selling_price)
+                            @if($variant->product->price)
                                 <p class="text-xs text-gray-500">
-                                    PV: {{ number_format($variant->product->selling_price, 0, ',', ' ') }} {{ $currency }}
+                                    PV: {{ number_format($variant->product->price, 0, ',', ' ') }} {{ $currency }}
                                 </p>
                             @endif
                         </td>

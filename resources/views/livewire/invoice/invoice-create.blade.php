@@ -38,7 +38,7 @@
                             <option value="{{ $sale->id }}">
                                 {{ $sale->sale_number }} - 
                                 {{ $sale->client ? $sale->client->name : 'Client Walk-in' }} - 
-                                {{ number_format($sale->total, 0, ',', ' ') }} CDF - 
+                                {{ format_currency($sale->total) }} - 
                                 {{ $sale->sale_date->format('d/m/Y') }}
                             </option>
                         @endforeach
@@ -67,7 +67,7 @@
                             </div>
                             <div>
                                 <span class="text-gray-600">Total:</span>
-                                <span class="ml-2 font-medium">{{ number_format($selectedSale->total, 0, ',', ' ') }} CDF</span>
+                                <span class="ml-2 font-medium">{{ format_currency($selectedSale->total) }}</span>
                             </div>
                         </div>
 
@@ -85,7 +85,7 @@
                                                 @endif
                                             </span>
                                             <span class="text-gray-900">
-                                                {{ $item->quantity }} x {{ number_format($item->unit_price, 0, ',', ' ') }} CDF
+                                                {{ $item->quantity }} x {{ format_currency($item->unit_price) }}
                                             </span>
                                         </div>
                                     @endforeach

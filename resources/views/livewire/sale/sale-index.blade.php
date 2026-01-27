@@ -1,4 +1,7 @@
-<div x-data="{ showDeleteModal: false, saleToDelete: null, saleNumber: '', showCompleteModal: false, saleToComplete: null, completeNumber: '', showRestoreModal: false, saleToRestore: null, restoreNumber: '', showForceDeleteModal: false, saleToForceDelete: null, forceDeleteNumber: '' }">
+<div x-data="{ showDeleteModal: false, saleToDelete: null, saleNumber: '', showCompleteModal: false, saleToComplete: null, completeNumber: '', showRestoreModal: false, saleToRestore: null, restoreNumber: '', showForceDeleteModal: false, saleToForceDelete: null, forceDeleteNumber: '', showExportMenu: false, showModal: false, isEditing: false }"
+    @open-email-modal.window="showModal = true"
+    @close-email-modal.window="showModal = false"
+>
 <x-slot name="header">
     <x-breadcrumb :items="[
         ['label' => 'Accueil', 'url' => route('dashboard')],
@@ -30,7 +33,7 @@
         </x-kpi-card>
         <x-kpi-card
             title="Montant Total"
-            :value="number_format($stats['total_amount'], 0, ',', ' ') . ' CDF'"
+            :value="format_currency($stats['total_amount'])"
             color="indigo">
             <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -46,7 +49,7 @@
         </x-kpi-card>
         <x-kpi-card
             title="Montant en Attente"
-            :value="number_format($stats['pending_amount'], 0, ',', ' ') . ' CDF'"
+            :value="format_currency($stats['pending_amount'])"
             color="purple">
             <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -100,17 +103,131 @@
                     <option value="refunded">Remboursé</option>
                 </x-form.select>
             </div>
+
+            <!-- Export Dropdown -->
+            <div class="relative" x-data="{ open: false }">
+                <button
+                    @click="open = !open"
+                    @click.outside="open = false"
+                    type="button"
+                    class="inline-flex items-center justify-center w-full px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                >
+                    <svg class="w-5 h-5 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                    Exporter
+                    <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                </button>
+
+                <div
+                    x-show="open"
+                    x-transition:enter="transition ease-out duration-100"
+                    x-transition:enter-start="transform opacity-0 scale-95"
+                    x-transition:enter-end="transform opacity-100 scale-100"
+                    x-transition:leave="transition ease-in duration-75"
+                    x-transition:leave-start="transform opacity-100 scale-100"
+                    x-transition:leave-end="transform opacity-0 scale-95"
+                    class="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-lg bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
+                    style="display: none;"
+                >
+                    <div class="py-1">
+                        <button
+                            wire:click="exportExcel"
+                            @click="open = false"
+                            class="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        >
+                            <svg class="w-5 h-5 mr-3 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            Export Excel
+                        </button>
+                        <button
+                            wire:click="exportPdf"
+                            @click="open = false"
+                            class="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        >
+                            <svg class="w-5 h-5 mr-3 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                            </svg>
+                            Export PDF
+                        </button>
+                        <hr class="my-1">
+                        <button
+                            wire:click="openEmailModal"
+                            @click="open = false"
+                            class="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        >
+                            <svg class="w-5 h-5 mr-3 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                            </svg>
+                            Envoyer par email
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Date Range Filter -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
+            <!-- Period Filter -->
+            <div>
+                <x-form.form-group label="Période" for="periodFilter">
+                    <x-form.select wire:model.live="periodFilter" id="periodFilter">
+                        <option value="today">Aujourd'hui</option>
+                        <option value="yesterday">Hier</option>
+                        <option value="this_week">Cette semaine</option>
+                        <option value="last_week">Semaine dernière</option>
+                        <option value="this_month">Ce mois</option>
+                        <option value="last_month">Mois dernier</option>
+                        <option value="last_3_months">3 derniers mois</option>
+                        <option value="last_6_months">6 derniers mois</option>
+                        <option value="this_year">Cette année</option>
+                        <option value="last_year">Année dernière</option>
+                        <option value="all">Tout</option>
+                        <option value="custom">Personnalisé</option>
+                    </x-form.select>
+                </x-form.form-group>
+            </div>
+
+            @if($periodFilter === 'custom')
+            <!-- Date From (only in custom mode) -->
             <x-form.form-group label="Date de début" for="dateFrom">
-                <x-form.input wire:model.live="dateFrom" type="date" id="dateFrom" />
+                <x-form.input
+                    wire:model.live="dateFrom"
+                    type="date"
+                    id="dateFrom"
+                />
             </x-form.form-group>
 
+            <!-- Date To (only in custom mode) -->
             <x-form.form-group label="Date de fin" for="dateTo">
-                <x-form.input wire:model.live="dateTo" type="date" id="dateTo" />
+                <x-form.input
+                    wire:model.live="dateTo"
+                    type="date"
+                    id="dateTo"
+                />
             </x-form.form-group>
+            @endif
+
+            <!-- Period Info -->
+            <div class="flex items-end {{ $periodFilter === 'custom' ? '' : 'md:col-span-3' }}">
+                <div class="w-full px-3 py-2 bg-indigo-50 border border-indigo-200 rounded-lg text-sm text-indigo-700">
+                    <svg class="inline-block w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    @if($dateFrom && $dateTo)
+                        {{ \Carbon\Carbon::parse($dateFrom)->format('d/m/Y') }} - {{ \Carbon\Carbon::parse($dateTo)->format('d/m/Y') }}
+                    @elseif($dateFrom)
+                        À partir du {{ \Carbon\Carbon::parse($dateFrom)->format('d/m/Y') }}
+                    @elseif($dateTo)
+                        Jusqu'au {{ \Carbon\Carbon::parse($dateTo)->format('d/m/Y') }}
+                    @else
+                        Toutes les dates
+                    @endif
+                </div>
+            </div>
         </div>
     </x-card>
 
@@ -177,19 +294,19 @@
                         </x-table.cell>
                         <x-table.cell>
                             <div class="text-sm font-semibold text-gray-900">
-                                {{ number_format($sale->total, 0, ',', ' ') }} CDF
+                                {{ format_currency($sale->total) }}
                             </div>
                             @if($sale->discount > 0)
                                 <div class="text-xs text-gray-500">
-                                    Remise: {{ number_format($sale->discount, 0, ',', ' ') }} CDF
+                                    Remise: {{ format_currency($sale->discount) }}
                                 </div>
                             @endif
                             @if($sale->payment_status === 'partial')
                                 <div class="text-xs text-blue-600 font-medium">
-                                    Payé: {{ number_format($sale->paid_amount, 0, ',', ' ') }} CDF
+                                    Payé: {{ format_currency($sale->paid_amount) }}
                                 </div>
                                 <div class="text-xs text-red-600">
-                                    Reste: {{ number_format($sale->remaining_amount, 0, ',', ' ') }} CDF
+                                    Reste: {{ format_currency($sale->remaining_amount) }}
                                 </div>
                             @endif
                         </x-table.cell>
@@ -514,5 +631,105 @@
             </div>
         </div>
     </div>
+
+    <!-- Email Modal -->
+    <x-ui.alpine-modal name="email" max-width="lg" title="Envoyer le rapport par email" icon-bg="from-indigo-500 to-indigo-600">
+        <x-slot name="icon">
+            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            </svg>
+        </x-slot>
+
+        <form wire:submit.prevent="sendReportEmail">
+            <x-ui.alpine-modal-body>
+                <div class="space-y-6">
+                    <!-- Info sur la période -->
+                    <div class="bg-indigo-50 border border-indigo-100 rounded-lg p-4">
+                        <div class="flex items-center space-x-3">
+                            <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            <div>
+                                <p class="text-sm font-medium text-indigo-900">Période sélectionnée</p>
+                                <p class="text-sm text-indigo-700">
+                                    {{ $this->getPeriodLabel() }}
+                                    @if($dateFrom && $dateTo)
+                                        ({{ \Carbon\Carbon::parse($dateFrom)->format('d/m/Y') }} - {{ \Carbon\Carbon::parse($dateTo)->format('d/m/Y') }})
+                                    @endif
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- User selection -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <x-form.form-group label="Destinataire 1" for="selectedUser" required>
+                            <x-form.select wire:model="selectedUserId" id="selectedUser">
+                                <option value="">-- Sélectionner un utilisateur --</option>
+                                @foreach($this->users as $user)
+                                    <option value="{{ $user->id }}">{{ $user->name }} ({{ $user->email }})</option>
+                                @endforeach
+                            </x-form.select>
+                            <x-form.input-error for="selectedUserId" />
+                        </x-form.form-group>
+
+                        <x-form.form-group label="Destinataire 2 (optionnel)" for="selectedUser2">
+                            <x-form.select wire:model="selectedUserId2" id="selectedUser2">
+                                <option value="">-- Aucun --</option>
+                                @foreach($this->users as $user)
+                                    <option value="{{ $user->id }}">{{ $user->name }} ({{ $user->email }})</option>
+                                @endforeach
+                            </x-form.select>
+                            <x-form.input-error for="selectedUserId2" />
+                        </x-form.form-group>
+                    </div>
+
+                    <!-- Files info -->
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <p class="text-sm font-medium text-gray-700 mb-3">Pièces jointes incluses :</p>
+                        <div class="space-y-2">
+                            <div class="flex items-center space-x-3">
+                                <div class="flex-shrink-0 w-8 h-8 bg-red-100 rounded flex items-center justify-center">
+                                    <svg class="w-4 h-4 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd" />
+                                    </svg>
+                                </div>
+                                <span class="text-sm text-gray-600">rapport_ventes.pdf</span>
+                            </div>
+                            <div class="flex items-center space-x-3">
+                                <div class="flex-shrink-0 w-8 h-8 bg-green-100 rounded flex items-center justify-center">
+                                    <svg class="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd" />
+                                    </svg>
+                                </div>
+                                <span class="text-sm text-gray-600">rapport_ventes.xlsx</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </x-ui.alpine-modal-body>
+
+            <div class="flex-shrink-0 flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-200 bg-gray-50 rounded-b-2xl">
+                <button type="button" @click="showModal = false"
+                    class="inline-flex items-center px-4 py-2.5 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition">
+                    Annuler
+                </button>
+                <button type="button"
+                    wire:click="sendReportEmail"
+                    wire:loading.attr="disabled"
+                    class="inline-flex items-center px-4 py-2.5 border border-transparent text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 transition">
+                    <svg wire:loading.remove wire:target="sendReportEmail" class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                    </svg>
+                    <svg wire:loading wire:target="sendReportEmail" class="animate-spin w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span wire:loading.remove wire:target="sendReportEmail">Envoyer</span>
+                    <span wire:loading wire:target="sendReportEmail">Envoi en cours...</span>
+                </button>
+            </div>
+        </form>
+    </x-ui.alpine-modal>
 </div>
 </div>

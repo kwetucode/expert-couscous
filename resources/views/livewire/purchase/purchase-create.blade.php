@@ -118,7 +118,7 @@
                                                         </div>
                                                         <div class="text-right flex-shrink-0">
                                                             <div class="text-sm font-bold text-indigo-600">
-                                                                {{ number_format($result['cost_price'], 0, ',', ' ') }} <span class="text-xs">CDF</span>
+                                                                {{ number_format($result['cost_price'], 0, ',', ' ') }} <span class="text-xs">{{ current_currency() }}</span>
                                                             </div>
                                                             <div class="text-xs font-medium mt-0.5 {{ $result['stock'] > 10 ? 'text-green-600' : ($result['stock'] > 0 ? 'text-amber-600' : 'text-red-600') }}">
                                                                 @if($result['stock'] > 0)
@@ -166,7 +166,7 @@
                                         />
                                     </x-form.form-group>
 
-                                    <x-form.form-group label="Prix d'achat (CDF)" for="selectedPrice">
+                                    <x-form.form-group label="Prix d'achat ({{ current_currency() }})" for="selectedPrice">
                                         <x-form.input
                                             wire:model.live="selectedPrice"
                                             type="number"
@@ -194,12 +194,12 @@
                                     <div class="flex-1">
                                         <div class="text-sm font-medium text-gray-900">{{ $item['name'] }}</div>
                                         <div class="text-xs text-gray-500 mt-1">
-                                            {{ $item['quantity'] }} x {{ number_format($item['unit_price'], 0, ',', ' ') }} CDF
+                                            {{ $item['quantity'] }} x {{ number_format($item['unit_price'], 0, ',', ' ') }} {{ current_currency() }}
                                         </div>
                                     </div>
                                     <div class="flex items-center space-x-4">
                                         <div class="text-sm font-semibold text-gray-900">
-                                            {{ number_format($item['total'], 0, ',', ' ') }} CDF
+                                            {{ number_format($item['total'], 0, ',', ' ') }} {{ current_currency() }}
                                         </div>
                                         <button type="button"
                                                 wire:click="removeItem({{ $index }})"
@@ -327,7 +327,7 @@
                                     <div class="flex justify-between text-lg font-bold">
                                         <span class="text-gray-900">Total:</span>
                                         <span class="text-indigo-600">
-                                            {{ number_format($total, 0, ',', ' ') }} CDF
+                                            {{ number_format($total, 0, ',', ' ') }} {{ current_currency() }}
                                         </span>
                                     </div>
                                 </div>

@@ -160,7 +160,7 @@ class GenerateDailyPosReport extends Command
      */
     private function formatMoney(float|string|int $amount): string
     {
-        return number_format((float) $amount, 0, ',', ' ') . ' FCFA';
+        return number_format((float) $amount, 0, ',', ' ') . ' ' . current_currency();
     }
 
     /**

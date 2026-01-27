@@ -46,10 +46,10 @@
                     <div class="text-lg font-bold tabular-nums" x-ref="clock">{{ now()->format('H:i:s') }}</div>
                 </div>
 
-                <!-- Lien vers version classique -->
-                <a href="{{ route('pos.cash-register') }}" wire:navigate
-                    class="px-3 py-1.5 bg-white/20 hover:bg-white/30 rounded-xl transition-all duration-200 text-xs font-semibold">
-                    Version Classique
+                <!-- Lien vers version Alpine optimisée -->
+                <a href="{{ route('pos.cash-register.alpine') }}" wire:navigate
+                    class="px-3 py-1.5 bg-green-400/30 hover:bg-green-400/40 rounded-xl transition-all duration-200 text-xs font-semibold flex items-center gap-1">
+                    ⚡ Version Rapide
                 </a>
 
                 <a href="{{ route('dashboard') }}" wire:navigate

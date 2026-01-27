@@ -41,7 +41,7 @@ class StatsService
     /**
      * Charge l'historique des transactions du jour
      */
-    public function loadTransactionHistory(int $userId, int $limit = 10): array
+    public function loadTransactionHistory(int $userId, int $limit = 10, int $offset = 0): array
     {
         $query = Sale::with(['client', 'invoice'])
             ->where('user_id', $userId)
@@ -54,10 +54,27 @@ class StatsService
         }
 
         return $query->orderByDesc('created_at')
+            ->offset($offset)
             ->limit($limit)
             ->get()
             ->map(fn($sale) => $this->formatTransaction($sale))
             ->toArray();
+    }
+
+    /**
+     * Compte le nombre total de transactions du jour
+     */
+    public function countTodayTransactions(int $userId): int
+    {
+        $query = Sale::where('user_id', $userId)
+            ->whereDate('created_at', today())
+            ->where('status', 'completed');
+
+        if (!user_can_access_all_stores() && current_store_id()) {
+            $query->where('store_id', current_store_id());
+        }
+
+        return $query->count();
     }
 
     /**

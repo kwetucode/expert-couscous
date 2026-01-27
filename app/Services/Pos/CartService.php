@@ -164,7 +164,7 @@ class CartService
             if ($price < $minAllowedPrice) {
                 return [
                     'success' => false,
-                    'message' => "Le prix ne peut pas être inférieur à " . number_format($minAllowedPrice, 0, ',', ' ') . " CDF (remise max: " . number_format($maxDiscountAmount, 0, ',', ' ') . " CDF)",
+                    'message' => "Le prix ne peut pas être inférieur à " . number_format($minAllowedPrice, 0, ',', ' ') . " " . current_currency() . " (remise max: " . number_format($maxDiscountAmount, 0, ',', ' ') . " " . current_currency() . ")",
                     'cart' => $this->cart
                 ];
             }

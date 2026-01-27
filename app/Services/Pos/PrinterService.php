@@ -120,25 +120,26 @@ class PrinterService
         $receipt[] = '';
         $receipt[] = str_repeat('-', $width);
 
-        // Totaux
-        $receipt[] = $this->formatLine('Sous-total', number_format($data['subtotal'], 0) . ' CDF', $width);
+        // Totaux - utiliser la devise de l'organisation
+        $currency = current_currency();
+        $receipt[] = $this->formatLine('Sous-total', number_format($data['subtotal'], 0) . ' ' . $currency, $width);
 
         if ($data['discount'] > 0) {
-            $receipt[] = $this->formatLine('Remise', '-' . number_format($data['discount'], 0) . ' CDF', $width);
+            $receipt[] = $this->formatLine('Remise', '-' . number_format($data['discount'], 0) . ' ' . $currency, $width);
         }
 
         if ($data['tax'] > 0) {
-            $receipt[] = $this->formatLine('Taxe', number_format($data['tax'], 0) . ' CDF', $width);
+            $receipt[] = $this->formatLine('Taxe', number_format($data['tax'], 0) . ' ' . $currency, $width);
         }
 
         $receipt[] = str_repeat('=', $width);
-        $receipt[] = $this->formatLine('TOTAL', number_format($data['total'], 0) . ' CDF', $width, true);
+        $receipt[] = $this->formatLine('TOTAL', number_format($data['total'], 0) . ' ' . $currency, $width, true);
         $receipt[] = str_repeat('=', $width);
 
         // Paiement
         $receipt[] = '';
-        $receipt[] = $this->formatLine('Payé', number_format($data['paid'], 0) . ' CDF', $width);
-        $receipt[] = $this->formatLine('Rendu', number_format($data['change'], 0) . ' CDF', $width);
+        $receipt[] = $this->formatLine('Payé', number_format($data['paid'], 0) . ' ' . $currency, $width);
+        $receipt[] = $this->formatLine('Rendu', number_format($data['change'], 0) . ' ' . $currency, $width);
 
         // Pied de page
         $receipt[] = '';

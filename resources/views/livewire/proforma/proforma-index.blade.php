@@ -4,8 +4,13 @@
         ['label' => 'Accueil', 'url' => route('dashboard')],
         ['label' => 'Proformas']
     ]" />
+</x-slot>
 
-    <div class="flex items-center justify-between mt-4">
+<div class="space-y-6">
+    <!-- Toast -->
+    <x-toast />
+
+     <div class="flex items-center justify-between mt-4">
         <div>
             <h1 class="text-3xl font-bold text-gray-900">Factures Proforma</h1>
             <p class="text-gray-500 mt-1">Gérez vos devis et factures proforma</p>
@@ -16,49 +21,75 @@
             </x-form.button>
         </div>
     </div>
-</x-slot>
-
-<div class="space-y-6">
-    <!-- Toast -->
-    <x-toast />
-
     <!-- Statistics Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-5 gap-6">
-        <x-stat-card
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <x-kpi-card
             title="Total Proformas"
             :value="$statistics['total']"
-            icon="document-text"
-            color="indigo" />
+            color="indigo">
+            <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+        </x-kpi-card>
 
-        <x-stat-card
+        <x-kpi-card
             title="En attente"
             :value="$statistics['pending']"
-            icon="clock"
-            color="yellow" />
+            color="orange">
+            <svg class="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+        </x-kpi-card>
 
-        <x-stat-card
+        <x-kpi-card
             title="Acceptées"
             :value="$statistics['accepted']"
-            icon="check-circle"
-            color="green" />
+            color="green">
+            <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+        </x-kpi-card>
 
-        <x-stat-card
+        <x-kpi-card
             title="Converties"
             :value="$statistics['converted']"
-            icon="switch-horizontal"
-            color="blue" />
+            color="blue">
+            <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+            </svg>
+        </x-kpi-card>
 
-        <x-stat-card
+        <x-kpi-card
             title="Montant en cours"
-            :value="number_format($statistics['total_amount'], 0, ',', ' ') . ' CDF'"
-            icon="currency-dollar"
-            color="purple" />
+            :value="format_currency($statistics['total_amount'])"
+            color="purple">
+            <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+        </x-kpi-card>
     </div>
 
     <!-- Filters Card -->
     <x-card>
         <div class="flex items-center justify-between mb-4">
             <h2 class="text-lg font-semibold text-gray-900">Filtres</h2>
+            <div class="flex items-center space-x-2">
+                <!-- Period Filter Dropdown -->
+                <x-form.select wire:model.live="periodFilter" class="w-48">
+                    <option value="today">Aujourd'hui</option>
+                    <option value="yesterday">Hier</option>
+                    <option value="this_week">Cette semaine</option>
+                    <option value="last_week">Semaine dernière</option>
+                    <option value="this_month">Ce mois</option>
+                    <option value="last_month">Mois dernier</option>
+                    <option value="last_3_months">3 derniers mois</option>
+                    <option value="last_6_months">6 derniers mois</option>
+                    <option value="this_year">Cette année</option>
+                    <option value="last_year">Année dernière</option>
+                    <option value="all">Toutes les dates</option>
+                    <option value="custom">Personnalisé</option>
+                </x-form.select>
+            </div>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -94,6 +125,21 @@
                 <x-form.input wire:model.live="dateTo" type="date" placeholder="Date fin" />
             </div>
         </div>
+
+        <!-- Period indicator -->
+        @if($periodFilter && $periodFilter !== 'custom')
+        <div class="mt-4 flex items-center">
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-indigo-100 text-indigo-800">
+                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                {{ $this->getPeriodLabel() }}
+                @if($dateFrom && $dateTo)
+                    : {{ \Carbon\Carbon::parse($dateFrom)->format('d/m/Y') }} - {{ \Carbon\Carbon::parse($dateTo)->format('d/m/Y') }}
+                @endif
+            </span>
+        </div>
+        @endif
     </x-card>
 
     <!-- Proformas List -->
@@ -150,7 +196,7 @@
                                 -
                             @endif
                         </x-table.cell>
-                        <x-table.cell align="right" class="font-semibold">{{ number_format($proforma->total, 0, ',', ' ') }} CDF</x-table.cell>
+                        <x-table.cell align="right" class="font-semibold">{{ format_currency($proforma->total) }}</x-table.cell>
                         <x-table.cell align="center">
                             @php
                                 $statusClasses = match($proforma->status) {

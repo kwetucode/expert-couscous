@@ -8,6 +8,7 @@ use App\Actions\Invoice\MarkInvoiceAsPaidAction;
 use App\Actions\Invoice\SendInvoiceAction;
 use App\Actions\Invoice\CancelInvoiceAction;
 use App\Repositories\InvoiceRepository;
+use App\Services\InvoiceExcelExporter;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -17,6 +18,7 @@ class InvoiceIndex extends Component
 
     public $search = '';
     public $statusFilter = '';
+    public $periodFilter = 'today';
     public $dateFrom = '';
     public $dateTo = '';
     public $perPage = 15;
@@ -38,11 +40,116 @@ class InvoiceIndex extends Component
     protected $queryString = [
         'search' => ['except' => ''],
         'statusFilter' => ['except' => ''],
+        'periodFilter' => ['except' => 'today'],
         'dateFrom' => ['except' => ''],
         'dateTo' => ['except' => ''],
         'sortField' => ['except' => 'invoice_date'],
         'sortDirection' => ['except' => 'desc'],
     ];
+
+    public function mount()
+    {
+        // Apply default period filter
+        $this->applyPeriodFilter($this->periodFilter);
+    }
+
+    /**
+     * Apply period filter to set date range
+     */
+    public function applyPeriodFilter(?string $period): void
+    {
+        if (!$period || $period === 'custom') {
+            return;
+        }
+
+        $now = now();
+
+        switch ($period) {
+            case 'today':
+                $this->dateFrom = $now->format('Y-m-d');
+                $this->dateTo = $now->format('Y-m-d');
+                break;
+
+            case 'yesterday':
+                $yesterday = $now->copy()->subDay();
+                $this->dateFrom = $yesterday->format('Y-m-d');
+                $this->dateTo = $yesterday->format('Y-m-d');
+                break;
+
+            case 'this_week':
+                $this->dateFrom = $now->copy()->startOfWeek()->format('Y-m-d');
+                $this->dateTo = $now->format('Y-m-d');
+                break;
+
+            case 'last_week':
+                $this->dateFrom = $now->copy()->subWeek()->startOfWeek()->format('Y-m-d');
+                $this->dateTo = $now->copy()->subWeek()->endOfWeek()->format('Y-m-d');
+                break;
+
+            case 'this_month':
+                $this->dateFrom = $now->copy()->startOfMonth()->format('Y-m-d');
+                $this->dateTo = $now->format('Y-m-d');
+                break;
+
+            case 'last_month':
+                $this->dateFrom = $now->copy()->subMonth()->startOfMonth()->format('Y-m-d');
+                $this->dateTo = $now->copy()->subMonth()->endOfMonth()->format('Y-m-d');
+                break;
+
+            case 'last_3_months':
+                $this->dateFrom = $now->copy()->subMonths(3)->startOfMonth()->format('Y-m-d');
+                $this->dateTo = $now->format('Y-m-d');
+                break;
+
+            case 'last_6_months':
+                $this->dateFrom = $now->copy()->subMonths(6)->startOfMonth()->format('Y-m-d');
+                $this->dateTo = $now->format('Y-m-d');
+                break;
+
+            case 'this_year':
+                $this->dateFrom = $now->copy()->startOfYear()->format('Y-m-d');
+                $this->dateTo = $now->format('Y-m-d');
+                break;
+
+            case 'last_year':
+                $this->dateFrom = $now->copy()->subYear()->startOfYear()->format('Y-m-d');
+                $this->dateTo = $now->copy()->subYear()->endOfYear()->format('Y-m-d');
+                break;
+
+            case 'all':
+                $this->dateFrom = '';
+                $this->dateTo = '';
+                break;
+        }
+    }
+
+    /**
+     * Get period label for display
+     */
+    public function getPeriodLabel(): string
+    {
+        return match($this->periodFilter) {
+            'today' => 'Aujourd\'hui',
+            'yesterday' => 'Hier',
+            'this_week' => 'Cette semaine',
+            'last_week' => 'Semaine dernière',
+            'this_month' => 'Ce mois',
+            'last_month' => 'Mois dernier',
+            'last_3_months' => '3 derniers mois',
+            'last_6_months' => '6 derniers mois',
+            'this_year' => 'Cette année',
+            'last_year' => 'Année dernière',
+            'all' => 'Toutes les dates',
+            'custom' => 'Personnalisé',
+            default => 'Aujourd\'hui'
+        };
+    }
+
+    public function updatedPeriodFilter($value)
+    {
+        $this->applyPeriodFilter($value);
+        $this->resetPage();
+    }
 
     public function updatingSearch()
     {
@@ -59,9 +166,23 @@ class InvoiceIndex extends Component
         $this->resetPage();
     }
 
+    public function updatedDateFrom()
+    {
+        if ($this->periodFilter !== 'custom') {
+            $this->periodFilter = 'custom';
+        }
+    }
+
     public function updatingDateTo()
     {
         $this->resetPage();
+    }
+
+    public function updatedDateTo()
+    {
+        if ($this->periodFilter !== 'custom') {
+            $this->periodFilter = 'custom';
+        }
     }
 
     public function openCreateModal()
@@ -147,7 +268,7 @@ class InvoiceIndex extends Component
         try {
             $action = app(MarkInvoiceAsPaidAction::class);
             $repository = app(InvoiceRepository::class);
-            
+
             $invoice = $repository->find($this->invoiceToProcess);
 
             if ($invoice) {
@@ -172,7 +293,7 @@ class InvoiceIndex extends Component
         try {
             $action = app(SendInvoiceAction::class);
             $repository = app(InvoiceRepository::class);
-            
+
             $invoice = $repository->find($this->invoiceToProcess);
 
             if ($invoice) {
@@ -197,7 +318,7 @@ class InvoiceIndex extends Component
         try {
             $action = app(CancelInvoiceAction::class);
             $repository = app(InvoiceRepository::class);
-            
+
             $invoice = $repository->find($this->invoiceToProcess);
 
             if ($invoice) {
@@ -222,7 +343,7 @@ class InvoiceIndex extends Component
         try {
             $action = app(DeleteInvoiceAction::class);
             $repository = app(InvoiceRepository::class);
-            
+
             $invoice = $repository->find($this->invoiceToDelete);
 
             if ($invoice) {
@@ -236,6 +357,67 @@ class InvoiceIndex extends Component
         }
 
         $this->invoiceToDelete = null;
+    }
+
+    public function exportExcel(InvoiceRepository $repository, InvoiceExcelExporter $exporter)
+    {
+        try {
+            $query = $repository->query()
+                ->with(['sale.client', 'sale.items']);
+
+            // Apply search
+            if ($this->search) {
+                $query->where(function($q) {
+                    $q->where('invoice_number', 'like', '%' . $this->search . '%')
+                      ->orWhereHas('sale.client', function($q) {
+                          $q->where('name', 'like', '%' . $this->search . '%');
+                      });
+                });
+            }
+
+            // Apply status filter
+            if ($this->statusFilter) {
+                $query->where('status', $this->statusFilter);
+            }
+
+            // Apply date range filter
+            if ($this->dateFrom && $this->dateTo) {
+                $query->whereDate('invoice_date', '>=', $this->dateFrom)
+                      ->whereDate('invoice_date', '<=', $this->dateTo);
+            } elseif ($this->dateFrom) {
+                $query->whereDate('invoice_date', '>=', $this->dateFrom);
+            } elseif ($this->dateTo) {
+                $query->whereDate('invoice_date', '<=', $this->dateTo);
+            }
+
+            // Apply sorting
+            $query->orderBy($this->sortField, $this->sortDirection);
+
+            $invoices = $query->get();
+
+            // Get period label for export
+            $periodLabel = $this->getPeriodLabel();
+
+            return $exporter->export($invoices, $this->dateFrom, $this->dateTo, $periodLabel);
+        } catch (\Exception $e) {
+            session()->flash('error', 'Erreur lors de l\'export : ' . $e->getMessage());
+            return null;
+        }
+    }
+
+    public function exportPdf()
+    {
+        $params = [
+            'period' => $this->periodFilter,
+            'date_from' => $this->dateFrom,
+            'date_to' => $this->dateTo,
+            'status' => $this->statusFilter,
+        ];
+
+        // Remove empty values
+        $params = array_filter($params, fn($value) => $value !== '' && $value !== null);
+
+        return redirect()->route('reports.invoices', $params);
     }
 
     public function render(InvoiceRepository $repository, \App\Repositories\SaleRepository $saleRepository)

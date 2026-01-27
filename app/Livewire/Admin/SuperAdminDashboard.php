@@ -161,11 +161,12 @@ class SuperAdminDashboard extends Component
             ->take(5)
             ->get()
             ->each(function ($payment) use ($activities) {
+                $currency = $payment->organization?->currency ?? current_currency();
                 $activities->push([
                     'type' => 'payment',
                     'icon' => 'credit-card',
                     'color' => 'green',
-                    'message' => "Paiement reçu: " . number_format($payment->amount, 0, ',', ' ') . " FCFA",
+                    'message' => "Paiement reçu: " . number_format($payment->amount, 0, ',', ' ') . " " . $currency,
                     'detail' => $payment->organization?->name ?? 'N/A',
                     'date' => $payment->created_at,
                 ]);

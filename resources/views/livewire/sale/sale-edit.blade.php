@@ -74,7 +74,7 @@
                                                         </div>
                                                         <div class="text-right">
                                                             <div class="text-sm font-semibold text-indigo-600">
-                                                                {{ number_format($result['price'], 0, ',', ' ') }} CDF
+                                                                {{ format_currency($result['price']) }}
                                                             </div>
                                                             <div class="text-xs text-gray-500">
                                                                 Stock: {{ $result['stock'] }}
@@ -96,12 +96,12 @@
                                                     min="1" placeholder="1" />
                                             </x-form.form-group>
 
-                                            <x-form.form-group label="Prix unitaire (CDF)" for="selectedPrice">
+                                            <x-form.form-group label="Prix unitaire ({{ current_currency() }})" for="selectedPrice">
                                                 <x-form.input wire:model.live="selectedPrice" type="number"
                                                     step="0.01" min="0" />
                                             </x-form.form-group>
 
-                                            <x-form.form-group label="Remise (CDF)" for="selectedDiscount">
+                                            <x-form.form-group label="Remise ({{ current_currency() }})" for="selectedDiscount">>
                                                 <x-form.input wire:model.live="selectedDiscount" type="number"
                                                     step="0.01" min="0" value="0" />
                                             </x-form.form-group>
@@ -128,15 +128,15 @@
                                             <div class="text-sm font-medium text-gray-900">{{ $item['name'] }}</div>
                                             <div class="text-xs text-gray-500 mt-1">
                                                 {{ $item['quantity'] }} x
-                                                {{ number_format($item['unit_price'], 0, ',', ' ') }} CDF
+                                                {{ format_currency($item['unit_price']) }}
                                                 @if ($item['discount'] > 0)
-                                                    - Remise: {{ number_format($item['discount'], 0, ',', ' ') }} CDF
+                                                    - Remise: {{ format_currency($item['discount']) }}
                                                 @endif
                                             </div>
                                         </div>
                                         <div class="flex items-center space-x-4">
                                             <div class="text-sm font-semibold text-gray-900">
-                                                {{ number_format($item['total'], 0, ',', ' ') }} CDF
+                                                {{ format_currency($item['total']) }}
                                             </div>
                                             @if ($canEditItems)
                                                 <button type="button" wire:click="removeItem({{ $index }})"
@@ -232,10 +232,9 @@
                                     <x-form.input-error for="form.paid_amount" />
                                     <p class="text-xs text-gray-500 mt-1">
                                         @if ($form->payment_status === 'paid')
-                                            Montant total payé (Total: {{ number_format($total, 0, ',', ' ') }} CDF)
+                                            Montant total payé (Total: {{ format_currency($total) }})
                                         @else
-                                            Montant partiel déjà versé (Total: {{ number_format($total, 0, ',', ' ') }}
-                                            CDF)
+                                            Montant partiel déjà versé (Total: {{ format_currency($total) }})
                                         @endif
                                     </p>
                                 </x-form.form-group>
@@ -279,19 +278,19 @@
                                     <div class="flex justify-between text-sm">
                                         <span class="text-gray-600">Total:</span>
                                         <span class="font-semibold text-gray-900">
-                                            {{ number_format($sale->total, 0, ',', ' ') }} CDF
+                                            {{ format_currency($sale->total) }}
                                         </span>
                                     </div>
                                     <div class="flex justify-between text-sm">
                                         <span class="text-green-600">Payé:</span>
                                         <span class="font-semibold text-green-600">
-                                            {{ number_format($salePaidAmount, 0, ',', ' ') }} CDF
+                                            {{ format_currency($salePaidAmount) }}
                                         </span>
                                     </div>
                                     <div class="flex justify-between text-sm pt-2 border-t border-gray-200">
                                         <span class="text-red-600">Reste:</span>
                                         <span class="font-bold text-red-600">
-                                            {{ number_format($saleRemainingAmount, 0, ',', ' ') }} CDF
+                                            {{ format_currency($saleRemainingAmount) }}
                                         </span>
                                     </div>
                                 </div>
@@ -307,7 +306,7 @@
                                                     <div class="flex justify-between items-start">
                                                         <div>
                                                             <div class="text-sm font-medium text-gray-900">
-                                                                {{ number_format($payment->amount, 0, ',', ' ') }} CDF
+                                                                {{ format_currency($payment->amount) }}
                                                             </div>
                                                             <div class="text-xs text-gray-500">
                                                                 {{ ucfirst($payment->payment_method) }} -
@@ -343,13 +342,13 @@
                                     <div class="flex justify-between text-sm">
                                         <span class="text-gray-600">Sous-total:</span>
                                         <span class="font-medium text-gray-900">
-                                            {{ number_format($subtotal, 0, ',', ' ') }} CDF
+                                            {{ format_currency($subtotal) }}
                                         </span>
                                     </div>
 
                                     <!-- Discount Input -->
                                     <div>
-                                        <x-form.form-group label="Remise globale (CDF)" for="form.discount">
+                                        <x-form.form-group label="Remise globale ({{ current_currency() }})" for="form.discount">>
                                             <x-form.input wire:model.live="form.discount" type="number"
                                                 step="0.01" min="0" value="0" />
                                             <x-form.input-error for="form.discount" />
@@ -358,7 +357,7 @@
 
                                     <!-- Tax Input -->
                                     <div>
-                                        <x-form.form-group label="Taxe (CDF)" for="form.tax">
+                                        <x-form.form-group label="Taxe ({{ current_currency() }})" for="form.tax">
                                             <x-form.input wire:model.live="form.tax" type="number" step="0.01"
                                                 min="0" value="0" />
                                             <x-form.input-error for="form.tax" />
@@ -370,7 +369,7 @@
                                         <div class="flex justify-between text-sm">
                                             <span class="text-red-600">- Remise:</span>
                                             <span class="font-medium text-red-600">
-                                                {{ number_format($form->discount, 0, ',', ' ') }} CDF
+                                                {{ format_currency($form->discount) }}
                                             </span>
                                         </div>
                                     @endif
@@ -380,7 +379,7 @@
                                         <div class="flex justify-between text-sm">
                                             <span class="text-gray-600">+ Taxe:</span>
                                             <span class="font-medium text-gray-900">
-                                                {{ number_format($form->tax, 0, ',', ' ') }} CDF
+                                                {{ format_currency($form->tax) }}
                                             </span>
                                         </div>
                                     @endif
@@ -389,7 +388,7 @@
                                         <div class="flex justify-between text-lg font-bold">
                                             <span class="text-gray-900">Total:</span>
                                             <span class="text-indigo-600">
-                                                {{ number_format($total, 0, ',', ' ') }} CDF
+                                                {{ format_currency($total) }}
                                             </span>
                                         </div>
                                     </div>

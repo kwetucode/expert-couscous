@@ -44,7 +44,7 @@
                         </div>
                         <div>
                             <span class="text-gray-600">Total:</span>
-                            <span class="ml-2 font-medium">{{ number_format($invoice->total, 0, ',', ' ') }} CDF</span>
+                            <span class="ml-2 font-medium">{{ format_currency($invoice->total) }}</span>
                         </div>
                         <div>
                             <span class="text-gray-600">Date vente:</span>

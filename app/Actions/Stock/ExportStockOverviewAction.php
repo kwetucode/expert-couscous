@@ -54,9 +54,9 @@ class ExportStockOverviewAction
 
         // KPI Cards
         $kpiData = [
-            ['label' => 'Valeur totale du stock:', 'value' => number_format($kpis['total_stock_value'], 0, ',', ' ') . ' CDF', 'color' => 'FF3B82F6'],
-            ['label' => 'Valeur de vente potentielle:', 'value' => number_format($kpis['total_retail_value'], 0, ',', ' ') . ' CDF', 'color' => 'FF10B981'],
-            ['label' => 'Profit potentiel:', 'value' => number_format($kpis['potential_profit'], 0, ',', ' ') . ' CDF', 'color' => 'FF8B5CF6'],
+            ['label' => 'Valeur totale du stock:', 'value' => format_currency($kpis['total_stock_value']), 'color' => 'FF3B82F6'],
+            ['label' => 'Valeur de vente potentielle:', 'value' => format_currency($kpis['total_retail_value']), 'color' => 'FF10B981'],
+            ['label' => 'Profit potentiel:', 'value' => format_currency($kpis['potential_profit']), 'color' => 'FF8B5CF6'],
             ['label' => 'Marge bénéficiaire:', 'value' => $kpis['profit_margin_percentage'] . '%', 'color' => 'FFF59E0B'],
         ];
 

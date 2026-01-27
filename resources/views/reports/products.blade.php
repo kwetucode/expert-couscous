@@ -30,7 +30,7 @@
                 <div class="summary-label">Stock Total</div>
             </td>
             <td style="width: 25%; text-align: center; background: #f9fafb; padding: 15px; border: 1px solid #e5e7eb;">
-                <div class="summary-value money">{{ number_format($totals['total_value'], 0, ',', ' ') }} FCFA</div>
+                <div class="summary-value money">{{ number_format($totals['total_value'], 0, ',', ' ') }} {{ current_currency() }}</div>
                 <div class="summary-label">Valeur Totale</div>
             </td>
         </tr>
@@ -52,6 +52,30 @@
         </thead>
         <tbody>
             @foreach($products as $index => $product)
+                @if($product->variants->isEmpty())
+                {{-- Produit sans variantes --}}
+                <tr>
+                    <td>{{ $index + 1 }}</td>
+                    <td>
+                        <strong>{{ $product->name }}</strong>
+                        @if($product->description)
+                        <br><small style="color: #666;">{{ Str::limit($product->description, 50) }}</small>
+                        @endif
+                    </td>
+                    <td>{{ $product->category?->name ?? '—' }}</td>
+                    <td>{{ $product->reference ?? '—' }}</td>
+                    <td class="text-right money">{{ number_format($product->cost_price ?? 0, 0, ',', ' ') }}</td>
+                    <td class="text-right money">{{ number_format($product->price ?? 0, 0, ',', ' ') }}</td>
+                    <td class="text-center"><span class="stock-out">0</span></td>
+                    <td class="text-center">
+                        @if($product->status === 'active')
+                            <span class="badge badge-success">Actif</span>
+                        @else
+                            <span class="badge badge-danger">Inactif</span>
+                        @endif
+                    </td>
+                </tr>
+                @else
                 @foreach($product->variants as $variantIndex => $variant)
                 <tr>
                     @if($variantIndex === 0)
@@ -71,7 +95,7 @@
                         @endif
                     </td>
                     <td class="text-right money">{{ number_format($product->cost_price ?? 0, 0, ',', ' ') }}</td>
-                    <td class="text-right money">{{ number_format($product->selling_price ?? 0, 0, ',', ' ') }}</td>
+                    <td class="text-right money">{{ number_format($product->price ?? 0, 0, ',', ' ') }}</td>
                     <td class="text-center">
                         @if($variant->stock_quantity <= 0)
                             <span class="stock-out">{{ $variant->stock_quantity }}</span>
@@ -83,7 +107,7 @@
                     </td>
                     @if($variantIndex === 0)
                     <td rowspan="{{ $product->variants->count() }}" class="text-center">
-                        @if($product->is_active)
+                        @if($product->status === 'active')
                             <span class="badge badge-success">Actif</span>
                         @else
                             <span class="badge badge-danger">Inactif</span>
@@ -92,6 +116,7 @@
                     @endif
                 </tr>
                 @endforeach
+                @endif
             @endforeach
         </tbody>
     </table>

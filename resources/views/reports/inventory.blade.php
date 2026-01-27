@@ -13,11 +13,11 @@
                 <div class="summary-label">Quantité Totale</div>
             </td>
             <td style="width: 25%; text-align: center; background: #dbeafe; padding: 15px; border: 1px solid #bfdbfe;">
-                <div class="summary-value money" style="color: #1e40af;">{{ number_format($totals['total_cost_value'], 0, ',', ' ') }} FCFA</div>
+                <div class="summary-value money" style="color: #1e40af;">{{ number_format($totals['total_cost_value'], 0, ',', ' ') }} {{ current_currency() }}</div>
                 <div class="summary-label">Valeur d'Achat</div>
             </td>
             <td style="width: 25%; text-align: center; background: #d1fae5; padding: 15px; border: 1px solid #a7f3d0;">
-                <div class="summary-value money" style="color: #059669;">{{ number_format($totals['total_sale_value'], 0, ',', ' ') }} FCFA</div>
+                <div class="summary-value money" style="color: #059669;">{{ number_format($totals['total_sale_value'], 0, ',', ' ') }} {{ current_currency() }}</div>
                 <div class="summary-label">Valeur de Vente</div>
             </td>
         </tr>
@@ -26,7 +26,7 @@
     <!-- By Category -->
     @foreach($byCategory as $categoryName => $variants)
     <div class="section-title">{{ $categoryName }} ({{ $variants->count() }} articles)</div>
-    
+
     <table>
         <thead>
             <tr>
@@ -53,7 +53,7 @@
                 <td class="text-center">{{ $variant->stock_quantity }}</td>
                 <td class="text-right money">{{ number_format($variant->product->cost_price ?? 0, 0, ',', ' ') }}</td>
                 <td class="text-right money">{{ number_format($variant->stock_quantity * ($variant->product->cost_price ?? 0), 0, ',', ' ') }}</td>
-                <td class="text-right money">{{ number_format($variant->stock_quantity * ($variant->product->selling_price ?? 0), 0, ',', ' ') }}</td>
+                <td class="text-right money">{{ number_format($variant->stock_quantity * ($variant->product->price ?? 0), 0, ',', ' ') }}</td>
             </tr>
             @endforeach
         </tbody>
@@ -63,7 +63,7 @@
                 <td class="text-center">{{ $variants->sum('stock_quantity') }}</td>
                 <td></td>
                 <td class="text-right money">{{ number_format($variants->sum(fn($v) => $v->stock_quantity * ($v->product->cost_price ?? 0)), 0, ',', ' ') }}</td>
-                <td class="text-right money">{{ number_format($variants->sum(fn($v) => $v->stock_quantity * ($v->product->selling_price ?? 0)), 0, ',', ' ') }}</td>
+                <td class="text-right money">{{ number_format($variants->sum(fn($v) => $v->stock_quantity * ($v->product->price ?? 0)), 0, ',', ' ') }}</td>
             </tr>
         </tfoot>
     </table>
@@ -74,8 +74,8 @@
         <tr style="background: #4f46e5; color: white; font-weight: bold;">
             <td style="width: 50%; padding: 12px;">TOTAL GÉNÉRAL</td>
             <td style="width: 12%; text-align: center; padding: 12px;">{{ number_format($totals['total_stock'], 0, ',', ' ') }} unités</td>
-            <td style="width: 19%; text-align: right; padding: 12px;">{{ number_format($totals['total_cost_value'], 0, ',', ' ') }} FCFA</td>
-            <td style="width: 19%; text-align: right; padding: 12px;">{{ number_format($totals['total_sale_value'], 0, ',', ' ') }} FCFA</td>
+            <td style="width: 19%; text-align: right; padding: 12px;">{{ number_format($totals['total_cost_value'], 0, ',', ' ') }} {{ current_currency() }}</td>
+            <td style="width: 19%; text-align: right; padding: 12px;">{{ number_format($totals['total_sale_value'], 0, ',', ' ') }} {{ current_currency() }}</td>
         </tr>
     </table>
 @endsection

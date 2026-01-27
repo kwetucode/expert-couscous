@@ -295,7 +295,7 @@ class PosPaymentPanel extends Component
 
         // Vérifier si la remise dépasse le maximum autorisé (si une limite existe)
         if ($this->maxAllowedDiscount > 0 && $this->discount > $this->maxAllowedDiscount) {
-            $this->discountError = "La remise ne peut pas dépasser " . number_format($this->maxAllowedDiscount, 0, ',', ' ') . " CDF (limite configurée sur les produits)";
+            $this->discountError = "La remise ne peut pas dépasser " . number_format($this->maxAllowedDiscount, 0, ',', ' ') . " " . current_currency() . " (limite configurée sur les produits)";
             $this->discount = $this->maxAllowedDiscount;
             $this->dispatch('show-toast', message: $this->discountError, type: 'warning');
         }
