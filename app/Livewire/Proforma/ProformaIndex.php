@@ -15,6 +15,7 @@ class ProformaIndex extends Component
 
     public $search = '';
     public $statusFilter = '';
+    public $periodFilter = 'this_month';
     public $dateFrom = '';
     public $dateTo = '';
     public $perPage = 15;
@@ -36,11 +37,128 @@ class ProformaIndex extends Component
     protected $queryString = [
         'search' => ['except' => ''],
         'statusFilter' => ['except' => ''],
+        'periodFilter' => ['except' => 'this_month'],
         'dateFrom' => ['except' => ''],
         'dateTo' => ['except' => ''],
         'sortField' => ['except' => 'proforma_date'],
         'sortDirection' => ['except' => 'desc'],
     ];
+
+    public function mount()
+    {
+        // Apply default period filter
+        $this->applyPeriodFilter($this->periodFilter);
+    }
+
+    /**
+     * Apply period filter to set date range
+     */
+    public function applyPeriodFilter(?string $period): void
+    {
+        if (!$period || $period === 'custom') {
+            return;
+        }
+
+        $now = now();
+
+        switch ($period) {
+            case 'today':
+                $this->dateFrom = $now->format('Y-m-d');
+                $this->dateTo = $now->format('Y-m-d');
+                break;
+
+            case 'yesterday':
+                $yesterday = $now->copy()->subDay();
+                $this->dateFrom = $yesterday->format('Y-m-d');
+                $this->dateTo = $yesterday->format('Y-m-d');
+                break;
+
+            case 'this_week':
+                $this->dateFrom = $now->copy()->startOfWeek()->format('Y-m-d');
+                $this->dateTo = $now->format('Y-m-d');
+                break;
+
+            case 'last_week':
+                $this->dateFrom = $now->copy()->subWeek()->startOfWeek()->format('Y-m-d');
+                $this->dateTo = $now->copy()->subWeek()->endOfWeek()->format('Y-m-d');
+                break;
+
+            case 'this_month':
+                $this->dateFrom = $now->copy()->startOfMonth()->format('Y-m-d');
+                $this->dateTo = $now->format('Y-m-d');
+                break;
+
+            case 'last_month':
+                $this->dateFrom = $now->copy()->subMonth()->startOfMonth()->format('Y-m-d');
+                $this->dateTo = $now->copy()->subMonth()->endOfMonth()->format('Y-m-d');
+                break;
+
+            case 'last_3_months':
+                $this->dateFrom = $now->copy()->subMonths(3)->startOfMonth()->format('Y-m-d');
+                $this->dateTo = $now->format('Y-m-d');
+                break;
+
+            case 'last_6_months':
+                $this->dateFrom = $now->copy()->subMonths(6)->startOfMonth()->format('Y-m-d');
+                $this->dateTo = $now->format('Y-m-d');
+                break;
+
+            case 'this_year':
+                $this->dateFrom = $now->copy()->startOfYear()->format('Y-m-d');
+                $this->dateTo = $now->format('Y-m-d');
+                break;
+
+            case 'last_year':
+                $this->dateFrom = $now->copy()->subYear()->startOfYear()->format('Y-m-d');
+                $this->dateTo = $now->copy()->subYear()->endOfYear()->format('Y-m-d');
+                break;
+
+            case 'all':
+                $this->dateFrom = '';
+                $this->dateTo = '';
+                break;
+        }
+    }
+
+    /**
+     * Get period label for display
+     */
+    public function getPeriodLabel(): string
+    {
+        return match($this->periodFilter) {
+            'today' => 'Aujourd\'hui',
+            'yesterday' => 'Hier',
+            'this_week' => 'Cette semaine',
+            'last_week' => 'Semaine dernière',
+            'this_month' => 'Ce mois',
+            'last_month' => 'Mois dernier',
+            'last_3_months' => '3 derniers mois',
+            'last_6_months' => '6 derniers mois',
+            'this_year' => 'Cette année',
+            'last_year' => 'Année dernière',
+            'all' => 'Toutes les dates',
+            'custom' => 'Personnalisé',
+            default => 'Ce mois'
+        };
+    }
+
+    public function updatedPeriodFilter($value)
+    {
+        $this->applyPeriodFilter($value);
+        $this->resetPage();
+    }
+
+    public function updatedDateFrom()
+    {
+        $this->periodFilter = 'custom';
+        $this->resetPage();
+    }
+
+    public function updatedDateTo()
+    {
+        $this->periodFilter = 'custom';
+        $this->resetPage();
+    }
 
     public function updatingSearch()
     {
@@ -144,7 +262,7 @@ class ProformaIndex extends Component
         if (!$this->proformaToSend) return;
 
         try {
-            $proforma = ProformaInvoice::with(['items', 'store', 'user'])->findOrFail($this->proformaToSend);
+            $proforma = ProformaInvoice::with(['items.productVariant.product', 'store', 'user'])->findOrFail($this->proformaToSend);
 
             // Mettre à jour l'email du client si différent
             if ($proforma->client_email !== $this->emailTo) {

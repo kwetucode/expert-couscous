@@ -20,9 +20,17 @@ class ProformaShow extends Component
     public $showEmailModal = false;
     public $emailTo = '';
 
+    /**
+     * Recharge les relations après chaque requête Livewire
+     */
+    public function hydrate()
+    {
+        $this->proforma->load(['items.productVariant.product', 'store', 'user', 'convertedInvoice']);
+    }
+
     public function mount(ProformaInvoice $proforma)
     {
-        $this->proforma = $proforma->load(['items.productVariant', 'store', 'user', 'convertedInvoice']);
+        $this->proforma = $proforma->load(['items.productVariant.product', 'store', 'user', 'convertedInvoice']);
     }
 
     /**
@@ -31,7 +39,7 @@ class ProformaShow extends Component
     public function prepareEmailSend()
     {
         $this->emailTo = $this->proforma->client_email ?? '';
-        $this->showEmailModal = true;
+        $this->dispatch('open-email-modal');
     }
 
     /**
@@ -47,23 +55,37 @@ class ProformaShow extends Component
         ]);
 
         try {
+            \Log::info('Tentative d\'envoi email proforma', [
+                'proforma_id' => $this->proforma->id,
+                'email' => $this->emailTo
+            ]);
+
             // Mettre à jour l'email du client si différent
             if ($this->proforma->client_email !== $this->emailTo) {
                 $this->proforma->update(['client_email' => $this->emailTo]);
-                $this->proforma->refresh();
+                $this->proforma = $this->proforma->fresh(['items.productVariant.product', 'store', 'user', 'convertedInvoice']);
             }
+
+            // Charger les relations nécessaires pour le PDF
+            $this->proforma->load(['items.productVariant.product', 'store', 'user']);
 
             // Envoyer l'email
             Mail::to($this->emailTo)->send(new ProformaInvoiceMail($this->proforma));
 
+            \Log::info('Email proforma envoyé avec succès', ['email' => $this->emailTo]);
+
             // Marquer comme envoyée si en brouillon
             if ($this->proforma->status === ProformaInvoice::STATUS_DRAFT) {
                 $service->markAsSent($this->proforma);
-                $this->proforma->refresh();
+                $this->proforma = $this->proforma->fresh(['items.productVariant.product', 'store', 'user', 'convertedInvoice']);
             }
 
             session()->flash('success', "Proforma envoyée par email à {$this->emailTo}");
         } catch (\Exception $e) {
+            \Log::error('Erreur envoi email proforma', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
             session()->flash('error', 'Erreur lors de l\'envoi : ' . $e->getMessage());
         }
 
@@ -75,7 +97,7 @@ class ProformaShow extends Component
      */
     public function closeEmailModal()
     {
-        $this->showEmailModal = false;
+        $this->dispatch('close-email-modal');
         $this->emailTo = '';
     }
 
@@ -83,7 +105,7 @@ class ProformaShow extends Component
     {
         try {
             $service->markAsSent($this->proforma);
-            $this->proforma->refresh();
+            $this->proforma = $this->proforma->fresh(['items.productVariant.product', 'store', 'user', 'convertedInvoice']);
             session()->flash('success', 'Proforma marquée comme envoyée.');
         } catch (\Exception $e) {
             session()->flash('error', 'Erreur : ' . $e->getMessage());
@@ -94,7 +116,7 @@ class ProformaShow extends Component
     {
         try {
             $service->accept($this->proforma);
-            $this->proforma->refresh();
+            $this->proforma = $this->proforma->fresh(['items.productVariant.product', 'store', 'user', 'convertedInvoice']);
             session()->flash('success', 'Proforma acceptée.');
         } catch (\Exception $e) {
             session()->flash('error', 'Erreur : ' . $e->getMessage());
@@ -105,7 +127,7 @@ class ProformaShow extends Component
     {
         try {
             $service->reject($this->proforma);
-            $this->proforma->refresh();
+            $this->proforma = $this->proforma->fresh(['items.productVariant.product', 'store', 'user', 'convertedInvoice']);
             session()->flash('success', 'Proforma refusée.');
         } catch (\Exception $e) {
             session()->flash('error', 'Erreur : ' . $e->getMessage());
@@ -115,7 +137,7 @@ class ProformaShow extends Component
     public function convert(ProformaService $service)
     {
         try {
-            $this->proforma->load('items');
+            $this->proforma->load('items.productVariant.product');
             $invoice = $service->convertToInvoice($this->proforma);
             session()->flash('success', "Proforma convertie en facture {$invoice->invoice_number}.");
             return redirect()->route('invoices.show', ['id' => $invoice->id]);

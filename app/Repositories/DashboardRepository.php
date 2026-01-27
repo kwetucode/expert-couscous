@@ -52,7 +52,15 @@ class DashboardRepository
     public function getTotalProducts(): int
     {
         $query = Product::query();
-        $this->applyStoreFilter($query);
+        
+        $storeId = effective_store_id();
+        if ($storeId) {
+            // Filter products that have stock in the selected store
+            $query->whereHas('storeStock', function($q) use ($storeId) {
+                $q->where('store_id', $storeId);
+            });
+        }
+        
         return $query->count();
     }
 

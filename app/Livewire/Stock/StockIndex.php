@@ -146,9 +146,15 @@ class StockIndex extends Component
     public function openDetailsModal(int $productVariantId)
     {
         $query = StockMovement::query()
-            ->with(['productVariant.product', 'user'])
+            ->with(['productVariant.product', 'user', 'store'])
             ->where('product_variant_id', $productVariantId)
             ->orderBy('date', 'desc');
+
+        // Apply store filter if a specific store is selected
+        $storeId = effective_store_id();
+        if ($storeId) {
+            $query->where('store_id', $storeId);
+        }
 
         // Apply same filters
         if ($this->type) {

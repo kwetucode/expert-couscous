@@ -13,7 +13,7 @@ class ProformaPdfController extends Controller
      */
     public function export(ProformaInvoice $proforma)
     {
-        $proforma->load(['items', 'store', 'user']);
+        $proforma->load(['items.productVariant.product', 'store', 'user']);
 
         $data = [
             'proforma' => $proforma,
@@ -32,7 +32,7 @@ class ProformaPdfController extends Controller
      */
     public function stream(ProformaInvoice $proforma)
     {
-        $proforma->load(['items', 'store', 'user']);
+        $proforma->load(['items.productVariant.product', 'store', 'user']);
 
         $data = [
             'proforma' => $proforma,

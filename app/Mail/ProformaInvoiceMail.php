@@ -54,7 +54,7 @@ class ProformaInvoiceMail extends Mailable
      */
     public function attachments(): array
     {
-        $this->proforma->load(['items', 'store', 'user']);
+        $this->proforma->load(['items.productVariant.product', 'store', 'user']);
 
         $pdf = Pdf::loadView('pdf.proforma', [
             'proforma' => $this->proforma,
