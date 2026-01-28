@@ -964,4 +964,473 @@ final response = await dio.get('/api/mobile/products', queryParameters: {
 
 ---
 
+## CRÉATION DE PRODUITS - WORKFLOW TYPE DE PRODUIT → CATÉGORIES
+
+### Principe
+
+Comme dans ProductModal web, l'utilisateur doit d'abord choisir un **type de produit**, puis les **catégories** sont filtrées en fonction du type choisi.
+
+### 9. Types de Produits (avec attributs optionnels)
+
+**Endpoint:** `GET /api/mobile/products/product-types`
+
+**Paramètres:**
+| Paramètre | Type | Description |
+|-----------|------|-------------|
+| `with_attributes` | bool | Inclure les attributs du type (optionnel) |
+
+**Réponse sans attributs:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "name": "Vêtements",
+      "slug": "vetements",
+      "description": "Vêtements et accessoires",
+      "has_variants": true,
+      "has_stock_management": true,
+      "icon": "shirt"
+    }
+  ]
+}
+```
+
+**Réponse avec attributs (`with_attributes=true`):**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "name": "Vêtements",
+      "slug": "vetements",
+      "description": "Vêtements et accessoires",
+      "has_variants": true,
+      "has_stock_management": true,
+      "icon": "shirt",
+      "attributes": [
+        {
+          "id": 1,
+          "name": "Taille",
+          "type": "select",
+          "is_variant": true,
+          "is_required": true,
+          "options": ["XS", "S", "M", "L", "XL"],
+          "default_value": null
+        },
+        {
+          "id": 2,
+          "name": "Couleur",
+          "type": "color",
+          "is_variant": true,
+          "is_required": true,
+          "options": ["Rouge", "Bleu", "Noir"],
+          "default_value": null
+        }
+      ]
+    }
+  ]
+}
+```
+
+---
+
+### 10. Détails d'un Type de Produit
+
+**Endpoint:** `GET /api/mobile/products/product-types/{id}`
+
+**Réponse:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "name": "Vêtements",
+    "slug": "vetements",
+    "description": "Vêtements et accessoires",
+    "has_variants": true,
+    "has_stock_management": true,
+    "icon": "shirt",
+    "attributes": [
+      {
+        "id": 1,
+        "name": "Taille",
+        "type": "select",
+        "is_variant": true,
+        "is_required": true,
+        "options": ["XS", "S", "M", "L", "XL"],
+        "default_value": null,
+        "sort_order": 1
+      }
+    ],
+    "categories": [
+      {"id": 1, "name": "T-shirts", "slug": "t-shirts"},
+      {"id": 2, "name": "Pantalons", "slug": "pantalons"},
+      {"id": 3, "name": "Robes", "slug": "robes"}
+    ]
+  }
+}
+```
+
+---
+
+### 11. Catégories filtrées par Type de Produit
+
+**Endpoint:** `GET /api/mobile/products/categories`
+
+**Paramètres:**
+| Paramètre | Type | Description |
+|-----------|------|-------------|
+| `product_type_id` | int | Filtrer par type de produit (optionnel) |
+
+**Sans filtre (`/categories`):**
+```json
+{
+  "success": true,
+  "data": [
+    {"id": 1, "name": "T-shirts", "slug": "t-shirts", "parent_id": null, "product_type_id": 1, "products_count": 15},
+    {"id": 2, "name": "Pantalons", "slug": "pantalons", "parent_id": null, "product_type_id": 1, "products_count": 8},
+    {"id": 3, "name": "Services", "slug": "services", "parent_id": null, "product_type_id": 2, "products_count": 5}
+  ]
+}
+```
+
+**Avec filtre (`/categories?product_type_id=1`):**
+```json
+{
+  "success": true,
+  "data": [
+    {"id": 1, "name": "T-shirts", "slug": "t-shirts", "parent_id": null, "product_type_id": 1, "products_count": 15},
+    {"id": 2, "name": "Pantalons", "slug": "pantalons", "parent_id": null, "product_type_id": 1, "products_count": 8}
+  ]
+}
+```
+
+---
+
+### 12. Données du Formulaire de Création
+
+**Endpoint:** `GET /api/mobile/products/create-form-data`
+
+Endpoint tout-en-un pour récupérer toutes les données nécessaires à la création d'un produit.
+
+**Paramètres:**
+| Paramètre | Type | Description |
+|-----------|------|-------------|
+| `product_type_id` | int | Type de produit sélectionné (optionnel) |
+
+**Sans type sélectionné:**
+```json
+{
+  "success": true,
+  "data": {
+    "product_types": [
+      {
+        "id": 1,
+        "name": "Vêtements",
+        "slug": "vetements",
+        "description": "Vêtements et accessoires",
+        "has_variants": true,
+        "has_stock_management": true,
+        "icon": "shirt",
+        "attributes": [...]
+      },
+      {
+        "id": 2,
+        "name": "Services",
+        "slug": "services",
+        "description": "Prestations de services",
+        "has_variants": false,
+        "has_stock_management": false,
+        "icon": "briefcase",
+        "attributes": []
+      }
+    ],
+    "categories": [
+      {"id": 1, "name": "T-shirts", "slug": "t-shirts", "product_type_id": 1},
+      {"id": 2, "name": "Pantalons", "slug": "pantalons", "product_type_id": 1},
+      {"id": 3, "name": "Consulting", "slug": "consulting", "product_type_id": 2}
+    ],
+    "selected_product_type_id": null
+  }
+}
+```
+
+**Avec type sélectionné (`?product_type_id=1`):**
+```json
+{
+  "success": true,
+  "data": {
+    "product_types": [...],
+    "categories": [
+      {"id": 1, "name": "T-shirts", "slug": "t-shirts", "product_type_id": 1},
+      {"id": 2, "name": "Pantalons", "slug": "pantalons", "product_type_id": 1}
+    ],
+    "selected_product_type_id": 1
+  }
+}
+```
+
+---
+
+## WORKFLOW CRÉATION PRODUIT (Flutter)
+
+### Étapes
+
+```
+1. Appeler GET /products/create-form-data
+   → Afficher la liste des types de produits
+
+2. Utilisateur sélectionne un type de produit
+   → Appeler GET /products/create-form-data?product_type_id=X
+   → OU Appeler GET /products/categories?product_type_id=X
+   → Filtrer les catégories affichées
+
+3. Utilisateur sélectionne une catégorie
+   → Appeler GET /products/generate-reference?category_id=Y
+   → Auto-générer la référence
+
+4. Utilisateur remplit le formulaire
+   → POST /products avec les données
+```
+
+### Diagramme de flux
+
+```
+┌─────────────────────────────────────┐
+│  📦 Nouveau Produit                 │
+├─────────────────────────────────────┤
+│                                     │
+│  ÉTAPE 1: Type de produit           │
+│  ┌─────────────────────────────────┐│
+│  │ [🔘] Vêtements                  ││
+│  │ [ ] Services                    ││
+│  │ [ ] Produits digitaux           ││
+│  └─────────────────────────────────┘│
+│                                     │
+│  ÉTAPE 2: Catégorie (filtrée)       │
+│  ┌─────────────────────────────────┐│
+│  │ [Sélectionner...            ▼] ││
+│  │ > T-shirts                      ││
+│  │ > Pantalons                     ││
+│  │ > Robes                         ││
+│  └─────────────────────────────────┘│
+│                                     │
+│  ÉTAPE 3: Informations produit      │
+│  ┌─────────────────────────────────┐│
+│  │ Nom: [________________]         ││
+│  │ Référence: [AUTO-GÉNÉRÉ]        ││
+│  │ Prix d'achat: [________]        ││
+│  │ Prix de vente: [________]       ││
+│  └─────────────────────────────────┘│
+│                                     │
+│  ÉTAPE 4: Attributs dynamiques      │
+│  (Si type a des attributs)          │
+│  ┌─────────────────────────────────┐│
+│  │ Taille: [S] [M] [L] [XL]        ││
+│  │ Couleur: [🔴] [🔵] [⚫]          ││
+│  └─────────────────────────────────┘│
+│                                     │
+│         [Créer le produit]          │
+└─────────────────────────────────────┘
+```
+
+### Service ProductService (Dart)
+
+```dart
+class ProductService {
+  final Dio _dio;
+  
+  ProductService(this._dio);
+
+  /// Récupère les données pour le formulaire de création
+  Future<ProductFormData> getCreateFormData({int? productTypeId}) async {
+    final response = await _dio.get('/api/mobile/products/create-form-data', 
+      queryParameters: {
+        if (productTypeId != null) 'product_type_id': productTypeId,
+      },
+    );
+    return ProductFormData.fromJson(response.data['data']);
+  }
+
+  /// Récupère les types de produits (avec ou sans attributs)
+  Future<List<ProductType>> getProductTypes({bool withAttributes = false}) async {
+    final response = await _dio.get('/api/mobile/products/product-types',
+      queryParameters: {
+        'with_attributes': withAttributes,
+      },
+    );
+    return (response.data['data'] as List)
+        .map((e) => ProductType.fromJson(e))
+        .toList();
+  }
+
+  /// Récupère les catégories filtrées par type de produit
+  Future<List<Category>> getCategories({int? productTypeId}) async {
+    final response = await _dio.get('/api/mobile/products/categories',
+      queryParameters: {
+        if (productTypeId != null) 'product_type_id': productTypeId,
+      },
+    );
+    return (response.data['data'] as List)
+        .map((e) => Category.fromJson(e))
+        .toList();
+  }
+
+  /// Récupère les détails d'un type de produit
+  Future<ProductTypeDetails> getProductTypeDetails(int id) async {
+    final response = await _dio.get('/api/mobile/products/product-types/$id');
+    return ProductTypeDetails.fromJson(response.data['data']);
+  }
+
+  /// Génère une référence pour un produit
+  Future<String> generateReference({int? categoryId}) async {
+    final response = await _dio.get('/api/mobile/products/generate-reference',
+      queryParameters: {
+        if (categoryId != null) 'category_id': categoryId,
+      },
+    );
+    return response.data['data']['reference'];
+  }
+}
+```
+
+### Modèles (Dart)
+
+```dart
+// product_form_data.dart
+class ProductFormData {
+  final List<ProductType> productTypes;
+  final List<Category> categories;
+  final int? selectedProductTypeId;
+
+  ProductFormData({
+    required this.productTypes,
+    required this.categories,
+    this.selectedProductTypeId,
+  });
+
+  factory ProductFormData.fromJson(Map<String, dynamic> json) {
+    return ProductFormData(
+      productTypes: (json['product_types'] as List)
+          .map((e) => ProductType.fromJson(e))
+          .toList(),
+      categories: (json['categories'] as List)
+          .map((e) => Category.fromJson(e))
+          .toList(),
+      selectedProductTypeId: json['selected_product_type_id'],
+    );
+  }
+}
+
+// product_type.dart
+class ProductType {
+  final int id;
+  final String name;
+  final String slug;
+  final String? description;
+  final bool hasVariants;
+  final bool hasStockManagement;
+  final String? icon;
+  final List<ProductAttribute>? attributes;
+
+  ProductType({
+    required this.id,
+    required this.name,
+    required this.slug,
+    this.description,
+    required this.hasVariants,
+    required this.hasStockManagement,
+    this.icon,
+    this.attributes,
+  });
+
+  factory ProductType.fromJson(Map<String, dynamic> json) {
+    return ProductType(
+      id: json['id'],
+      name: json['name'],
+      slug: json['slug'],
+      description: json['description'],
+      hasVariants: json['has_variants'] ?? false,
+      hasStockManagement: json['has_stock_management'] ?? true,
+      icon: json['icon'],
+      attributes: json['attributes'] != null
+          ? (json['attributes'] as List)
+              .map((e) => ProductAttribute.fromJson(e))
+              .toList()
+          : null,
+    );
+  }
+}
+
+// product_attribute.dart
+class ProductAttribute {
+  final int id;
+  final String name;
+  final String type; // text, number, select, color, etc.
+  final bool isVariant;
+  final bool isRequired;
+  final List<String>? options;
+  final String? defaultValue;
+
+  ProductAttribute({
+    required this.id,
+    required this.name,
+    required this.type,
+    required this.isVariant,
+    required this.isRequired,
+    this.options,
+    this.defaultValue,
+  });
+
+  factory ProductAttribute.fromJson(Map<String, dynamic> json) {
+    return ProductAttribute(
+      id: json['id'],
+      name: json['name'],
+      type: json['type'],
+      isVariant: json['is_variant'] ?? false,
+      isRequired: json['is_required'] ?? false,
+      options: json['options'] != null 
+          ? List<String>.from(json['options'])
+          : null,
+      defaultValue: json['default_value'],
+    );
+  }
+}
+
+// category.dart (mise à jour)
+class Category {
+  final int id;
+  final String name;
+  final String slug;
+  final int? parentId;
+  final int? productTypeId;
+  final int productsCount;
+
+  Category({
+    required this.id,
+    required this.name,
+    required this.slug,
+    this.parentId,
+    this.productTypeId,
+    this.productsCount = 0,
+  });
+
+  factory Category.fromJson(Map<String, dynamic> json) {
+    return Category(
+      id: json['id'],
+      name: json['name'],
+      slug: json['slug'],
+      parentId: json['parent_id'],
+      productTypeId: json['product_type_id'],
+      productsCount: json['products_count'] ?? 0,
+    );
+  }
+}
+```
+
+---
+
 *Document généré le 28 janvier 2026*

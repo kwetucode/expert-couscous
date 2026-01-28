@@ -146,6 +146,8 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('/search', [MobileProductController::class, 'search'])->name('search');
             Route::get('/categories', [MobileProductController::class, 'categories'])->name('categories');
             Route::get('/product-types', [MobileProductController::class, 'productTypes'])->name('product-types');
+            Route::get('/product-types/{id}', [MobileProductController::class, 'productTypeDetails'])->name('product-types.show');
+            Route::get('/create-form-data', [MobileProductController::class, 'createFormData'])->name('create-form-data');
             Route::get('/generate-reference', [MobileProductController::class, 'generateReference'])->name('generate-reference');
 
             // CRUD

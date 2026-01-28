@@ -388,11 +388,21 @@ class MobileProductController extends Controller
      * Récupérer les catégories pour sélection
      *
      * GET /api/mobile/products/categories
+     * 
+     * @queryParam product_type_id int Filtrer par type de produit (optionnel)
      */
-    public function categories(): JsonResponse
+    public function categories(Request $request): JsonResponse
     {
         try {
-            $categories = $this->categoryRepository->all();
+            $productTypeId = $request->input('product_type_id');
+            
+            if ($productTypeId) {
+                // Filtrer les catégories par type de produit (comme ProductModal)
+                $categories = $this->categoryRepository->getByProductType((int) $productTypeId);
+            } else {
+                // Retourner toutes les catégories si aucun type n'est spécifié
+                $categories = $this->categoryRepository->all();
+            }
 
             return response()->json([
                 'success' => true,
@@ -401,6 +411,7 @@ class MobileProductController extends Controller
                     'name' => $c->name,
                     'slug' => $c->slug,
                     'parent_id' => $c->parent_id,
+                    'product_type_id' => $c->product_type_id,
                     'products_count' => $c->products_count ?? 0,
                 ]),
             ]);
@@ -417,28 +428,172 @@ class MobileProductController extends Controller
      * Récupérer les types de produits pour sélection
      *
      * GET /api/mobile/products/product-types
+     * 
+     * @queryParam with_attributes bool Inclure les attributs du type (optionnel)
      */
-    public function productTypes(): JsonResponse
+    public function productTypes(Request $request): JsonResponse
     {
         try {
+            $withAttributes = filter_var($request->input('with_attributes', false), FILTER_VALIDATE_BOOLEAN);
+            
             $productTypes = $this->productTypeRepository->allActive();
+            
+            if ($withAttributes) {
+                $productTypes->load('attributes');
+            }
 
             return response()->json([
                 'success' => true,
-                'data' => $productTypes->map(fn($pt) => [
-                    'id' => $pt->id,
-                    'name' => $pt->name,
-                    'slug' => $pt->slug,
-                    'description' => $pt->description,
-                    'has_variants' => $pt->has_variants,
-                    'has_stock_management' => $pt->has_stock_management,
-                    'icon' => $pt->icon,
-                ]),
+                'data' => $productTypes->map(function ($pt) use ($withAttributes) {
+                    $data = [
+                        'id' => $pt->id,
+                        'name' => $pt->name,
+                        'slug' => $pt->slug,
+                        'description' => $pt->description,
+                        'has_variants' => $pt->has_variants,
+                        'has_stock_management' => $pt->has_stock_management,
+                        'icon' => $pt->icon,
+                    ];
+                    
+                    if ($withAttributes && $pt->relationLoaded('attributes')) {
+                        $data['attributes'] = $pt->attributes->map(fn($attr) => [
+                            'id' => $attr->id,
+                            'name' => $attr->name,
+                            'type' => $attr->type,
+                            'is_variant' => $attr->is_variant,
+                            'is_required' => $attr->is_required,
+                            'options' => $attr->options,
+                            'default_value' => $attr->default_value,
+                        ]);
+                    }
+                    
+                    return $data;
+                }),
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Erreur lors de la récupération des types de produits',
+                'error' => config('app.debug') ? $e->getMessage() : null,
+            ], 500);
+        }
+    }
+
+    /**
+     * Récupérer un type de produit avec ses détails et attributs
+     *
+     * GET /api/mobile/products/product-types/{id}
+     */
+    public function productTypeDetails(int $id): JsonResponse
+    {
+        try {
+            $productType = $this->productTypeRepository->findById($id);
+            
+            if (!$productType) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Type de produit non trouvé',
+                ], 404);
+            }
+
+            // Récupérer les catégories associées à ce type
+            $categories = $this->categoryRepository->getByProductType($id);
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'id' => $productType->id,
+                    'name' => $productType->name,
+                    'slug' => $productType->slug,
+                    'description' => $productType->description,
+                    'has_variants' => $productType->has_variants,
+                    'has_stock_management' => $productType->has_stock_management,
+                    'icon' => $productType->icon,
+                    'attributes' => $productType->attributes->map(fn($attr) => [
+                        'id' => $attr->id,
+                        'name' => $attr->name,
+                        'type' => $attr->type,
+                        'is_variant' => $attr->is_variant,
+                        'is_required' => $attr->is_required,
+                        'options' => $attr->options,
+                        'default_value' => $attr->default_value,
+                        'sort_order' => $attr->sort_order,
+                    ]),
+                    'categories' => $categories->map(fn($c) => [
+                        'id' => $c->id,
+                        'name' => $c->name,
+                        'slug' => $c->slug,
+                    ]),
+                ],
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de la récupération du type de produit',
+                'error' => config('app.debug') ? $e->getMessage() : null,
+            ], 500);
+        }
+    }
+
+    /**
+     * Données nécessaires pour créer un produit (form data)
+     * 
+     * GET /api/mobile/products/create-form-data
+     * 
+     * Retourne les types de produits, et optionnellement les catégories filtrées
+     */
+    public function createFormData(Request $request): JsonResponse
+    {
+        try {
+            $productTypeId = $request->input('product_type_id');
+            
+            // 1. Récupérer tous les types de produits avec leurs attributs
+            $productTypes = $this->productTypeRepository->allActive();
+            $productTypes->load('attributes');
+            
+            // 2. Récupérer les catégories (filtrées si product_type_id fourni)
+            if ($productTypeId) {
+                $categories = $this->categoryRepository->getByProductType((int) $productTypeId);
+            } else {
+                $categories = $this->categoryRepository->all();
+            }
+            
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'product_types' => $productTypes->map(function ($pt) {
+                        return [
+                            'id' => $pt->id,
+                            'name' => $pt->name,
+                            'slug' => $pt->slug,
+                            'description' => $pt->description,
+                            'has_variants' => $pt->has_variants,
+                            'has_stock_management' => $pt->has_stock_management,
+                            'icon' => $pt->icon,
+                            'attributes' => $pt->attributes->map(fn($attr) => [
+                                'id' => $attr->id,
+                                'name' => $attr->name,
+                                'type' => $attr->type,
+                                'is_variant' => $attr->is_variant,
+                                'is_required' => $attr->is_required,
+                                'options' => $attr->options,
+                                'default_value' => $attr->default_value,
+                            ]),
+                        ];
+                    }),
+                    'categories' => $categories->map(fn($c) => [
+                        'id' => $c->id,
+                        'name' => $c->name,
+                        'slug' => $c->slug,
+                        'product_type_id' => $c->product_type_id,
+                    ]),
+                    'selected_product_type_id' => $productTypeId ? (int) $productTypeId : null,
+                ],
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de la récupération des données du formulaire',
                 'error' => config('app.debug') ? $e->getMessage() : null,
             ], 500);
         }
