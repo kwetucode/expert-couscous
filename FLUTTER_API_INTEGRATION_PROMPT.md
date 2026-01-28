@@ -152,6 +152,247 @@ Ce document contient les instructions pour implémenter les nouvelles fonctionna
 
 ---
 
+### 5. Vue d'ensemble du Stock (Stock Overview)
+
+**Endpoint:** `GET /api/mobile/stock/overview`
+
+**Paramètres:**
+| Paramètre | Type | Description |
+|-----------|------|-------------|
+| `per_page` | int | Nombre d'éléments par page (10-100) |
+| `page` | int | Numéro de page |
+| `search` | string | Recherche par nom ou SKU |
+| `category_id` | int | Filtrer par catégorie |
+| `stock_level` | string | `in_stock`, `low_stock`, `out_of_stock` |
+| `sort_by` | string | `stock_quantity`, `name`, `value` |
+| `sort_dir` | string | `asc` ou `desc` |
+
+**Réponse:**
+```json
+{
+  "success": true,
+  "data": {
+    "kpis": {
+      "total_stock_value": 500000,
+      "total_stock_value_formatted": "500 000,00",
+      "total_retail_value": 750000,
+      "total_retail_value_formatted": "750 000,00",
+      "potential_profit": 250000,
+      "potential_profit_formatted": "250 000,00",
+      "profit_margin_percentage": 33.33,
+      "total_products": 25,
+      "in_stock_count": 20,
+      "out_of_stock_count": 3,
+      "low_stock_count": 2,
+      "total_units": 500
+    },
+    "variants": [
+      {
+        "id": 1,
+        "product_id": 1,
+        "sku": "PROD-001",
+        "product_name": "Produit A",
+        "variant_name": "Produit A - Taille M",
+        "category": "Vêtements",
+        "stock_quantity": 50,
+        "low_stock_threshold": 10,
+        "status": "in_stock",
+        "status_label": "En stock",
+        "cost_price": 1000,
+        "price": 1500,
+        "stock_value": 50000,
+        "retail_value": 75000
+      }
+    ],
+    "categories": [
+      {"id": 1, "name": "Vêtements"},
+      {"id": 2, "name": "Accessoires"}
+    ],
+    "pagination": {
+      "current_page": 1,
+      "last_page": 3,
+      "per_page": 20,
+      "total": 50
+    }
+  }
+}
+```
+
+---
+
+### 6. Tableau de bord Stock (Stock Dashboard)
+
+**Endpoint:** `GET /api/mobile/stock/dashboard`
+
+**Paramètres:**
+| Paramètre | Type | Description |
+|-----------|------|-------------|
+| `date_from` | string | Date de début (défaut: 1er du mois) |
+| `date_to` | string | Date de fin (défaut: aujourd'hui) |
+
+**Réponse:**
+```json
+{
+  "success": true,
+  "data": {
+    "period": {
+      "date_from": "2026-01-01",
+      "date_to": "2026-01-28"
+    },
+    "stats": {
+      "total_in": 500,
+      "total_out": 350,
+      "net_movement": 150,
+      "total_value_in": 500000,
+      "total_value_in_formatted": "500 000,00",
+      "total_value_out": 350000,
+      "total_value_out_formatted": "350 000,00",
+      "total_movements": 120
+    },
+    "low_stock_products": [
+      {
+        "id": 1,
+        "product_name": "Produit A",
+        "variant_name": "Taille M",
+        "sku": "PROD-001",
+        "stock_quantity": 5,
+        "low_stock_threshold": 10,
+        "status": "low_stock"
+      }
+    ],
+    "out_of_stock_products": [
+      {
+        "id": 2,
+        "product_name": "Produit B",
+        "variant_name": "Taille L",
+        "sku": "PROD-002",
+        "stock_quantity": 0,
+        "status": "out_of_stock"
+      }
+    ],
+    "recent_movements": [
+      {
+        "id": 1,
+        "type": "in",
+        "type_label": "Entrée",
+        "movement_type": "purchase",
+        "quantity": 50,
+        "reference": "ACH-202601-0001",
+        "date": "2026-01-28",
+        "product_variant": {
+          "id": 1,
+          "sku": "PROD-001",
+          "product_name": "Produit A"
+        },
+        "user": {
+          "id": 1,
+          "name": "Admin"
+        }
+      }
+    ],
+    "alerts_summary": {
+      "low_stock_count": 2,
+      "out_of_stock_count": 3,
+      "total_alerts": 5
+    }
+  }
+}
+```
+
+---
+
+### 7. Liste des Alertes de Stock (paginée)
+
+**Endpoint:** `GET /api/mobile/stock/alerts/list`
+
+**Paramètres:**
+| Paramètre | Type | Description |
+|-----------|------|-------------|
+| `per_page` | int | Nombre d'éléments par page (10-100) |
+| `alert_type` | string | `all`, `out_of_stock`, `low_stock` |
+| `search` | string | Recherche par nom ou SKU |
+
+**Réponse:**
+```json
+{
+  "success": true,
+  "data": {
+    "variants": [
+      {
+        "id": 1,
+        "product_id": 1,
+        "product_name": "Produit A",
+        "variant_name": "Taille M",
+        "sku": "PROD-001",
+        "stock_quantity": 0,
+        "low_stock_threshold": 10,
+        "status": "out_of_stock",
+        "status_label": "Rupture",
+        "product": {
+          "id": 1,
+          "name": "Produit A",
+          "reference": "REF-001",
+          "category": "Vêtements"
+        }
+      }
+    ],
+    "summary": {
+      "out_of_stock_count": 3,
+      "low_stock_count": 2,
+      "total_alerts": 5
+    },
+    "filters": {
+      "alert_type": "all",
+      "search": null
+    },
+    "pagination": {
+      "current_page": 1,
+      "last_page": 1,
+      "per_page": 20,
+      "total": 5
+    }
+  }
+}
+```
+
+---
+
+### 8. Résumé du Stock (KPIs uniquement)
+
+**Endpoint:** `GET /api/mobile/stock/summary`
+
+**Réponse:**
+```json
+{
+  "success": true,
+  "data": {
+    "kpis": {
+      "total_products": 25,
+      "in_stock_count": 20,
+      "out_of_stock_count": 3,
+      "low_stock_count": 2,
+      "total_units": 500
+    },
+    "value": {
+      "total_stock_value": 500000,
+      "total_stock_value_formatted": "500 000,00",
+      "total_retail_value": 750000,
+      "total_retail_value_formatted": "750 000,00",
+      "potential_profit": 250000,
+      "potential_profit_formatted": "250 000,00",
+      "profit_margin_percentage": 33.33
+    },
+    "alerts": {
+      "total": 5,
+      "out_of_stock": 3,
+      "low_stock": 2
+    }
+  }
+}
+```
+
+---
+
 ## TÂCHES À RÉALISER
 
 ### 1. Services/Repositories
@@ -177,6 +418,29 @@ Future<GroupedMovementsResponse> getGroupedMovements({
   DateTime? dateFrom,
   DateTime? dateTo,
 });
+
+// NOUVEAU: Stock Overview, Dashboard, Alerts
+Future<StockOverviewResponse> getStockOverview({
+  int page = 1,
+  String? search,
+  int? categoryId,
+  String? stockLevel,
+  String? sortBy,
+  String? sortDir,
+});
+
+Future<StockDashboardResponse> getStockDashboard({
+  DateTime? dateFrom,
+  DateTime? dateTo,
+});
+
+Future<StockAlertsListResponse> getStockAlertsList({
+  int page = 1,
+  String? alertType, // all, out_of_stock, low_stock
+  String? search,
+});
+
+Future<StockSummaryResponse> getStockSummary();
 
 // ProductService
 Future<PaginatedResponse<Product>> getProducts({
@@ -238,6 +502,116 @@ class MovementSummary {
   final int totalMovements;
   final int totalIn;
   final int totalOut;
+}
+
+// NOUVEAU: stock_overview.dart
+class StockOverviewResponse {
+  final StockKpis kpis;
+  final List<StockVariant> variants;
+  final List<CategoryInfo> categories;
+  final PaginationInfo pagination;
+}
+
+class StockKpis {
+  final double totalStockValue;
+  final String totalStockValueFormatted;
+  final double totalRetailValue;
+  final String totalRetailValueFormatted;
+  final double potentialProfit;
+  final String potentialProfitFormatted;
+  final double profitMarginPercentage;
+  final int totalProducts;
+  final int inStockCount;
+  final int outOfStockCount;
+  final int lowStockCount;
+  final int totalUnits;
+}
+
+class StockVariant {
+  final int id;
+  final int productId;
+  final String sku;
+  final String productName;
+  final String variantName;
+  final String? category;
+  final int stockQuantity;
+  final int lowStockThreshold;
+  final String status; // in_stock, low_stock, out_of_stock
+  final String statusLabel;
+  final double costPrice;
+  final double price;
+  final double stockValue;
+  final double retailValue;
+}
+
+// NOUVEAU: stock_dashboard.dart
+class StockDashboardResponse {
+  final DatePeriod period;
+  final MovementStats stats;
+  final List<AlertProduct> lowStockProducts;
+  final List<AlertProduct> outOfStockProducts;
+  final List<RecentMovement> recentMovements;
+  final AlertsSummary alertsSummary;
+}
+
+class MovementStats {
+  final int totalIn;
+  final int totalOut;
+  final int netMovement;
+  final double totalValueIn;
+  final String totalValueInFormatted;
+  final double totalValueOut;
+  final String totalValueOutFormatted;
+  final int totalMovements;
+}
+
+class AlertProduct {
+  final int id;
+  final String productName;
+  final String variantName;
+  final String sku;
+  final int stockQuantity;
+  final int? lowStockThreshold;
+  final String status;
+}
+
+class RecentMovement {
+  final int id;
+  final String type;
+  final String typeLabel;
+  final String movementType;
+  final int quantity;
+  final String? reference;
+  final DateTime date;
+  final ProductVariantInfo? productVariant;
+  final UserInfo? user;
+}
+
+// NOUVEAU: stock_alerts_list.dart
+class StockAlertsListResponse {
+  final List<AlertVariant> variants;
+  final AlertsSummary summary;
+  final AlertFilters filters;
+  final PaginationInfo pagination;
+}
+
+class AlertVariant {
+  final int id;
+  final int productId;
+  final String productName;
+  final String variantName;
+  final String sku;
+  final int stockQuantity;
+  final int lowStockThreshold;
+  final String status;
+  final String statusLabel;
+  final ProductInfo product;
+}
+
+class AlertsSummary {
+  final int outOfStockCount;
+  final int lowStockCount;
+  final int totalAlerts;
 }
 ```
 
@@ -330,6 +704,94 @@ Ajouter filtre chips de niveau de stock:
 [Tous] [En stock] [Stock bas] [Rupture]
 ```
 
+#### e) NOUVEAU: Écran État du Stock (`StockOverviewScreen`)
+
+```
+┌─────────────────────────────────────┐
+│  📊 État du Stock                   │
+├─────────────────────────────────────┤
+│  ┌─────────┐  ┌─────────┐           │
+│  │ 500 000 │  │   25    │           │
+│  │ Valeur  │  │Produits │           │
+│  └─────────┘  └─────────┘           │
+│  ┌─────────┐  ┌─────────┐           │
+│  │   3     │  │   2     │           │
+│  │Ruptures │  │Stock bas│           │
+│  └─────────┘  └─────────┘           │
+├─────────────────────────────────────┤
+│  [🔍 Recherche...              ]    │
+│  [Catégorie ▼] [Niveau stock ▼]     │
+├─────────────────────────────────────┤
+│  Liste des variantes paginée        │
+│  ┌─────────────────────────────────┐│
+│  │ Produit A - Taille M    [50]   ││
+│  │ SKU: PROD-001  🟢 En stock     ││
+│  │ Valeur: 50 000                 ││
+│  └─────────────────────────────────┘│
+└─────────────────────────────────────┘
+```
+
+#### f) NOUVEAU: Tableau de Bord Stock (`StockDashboardScreen`)
+
+```
+┌─────────────────────────────────────┐
+│  📈 Tableau de Bord Stock           │
+├─────────────────────────────────────┤
+│  Période: [01/01 ▼] - [28/01 ▼]     │
+├─────────────────────────────────────┤
+│  ┌─────────┐  ┌─────────┐           │
+│  │ ↑ 500   │  │ ↓ 350   │           │
+│  │ Entrées │  │ Sorties │           │
+│  └─────────┘  └─────────┘           │
+│  ┌─────────┐  ┌─────────┐           │
+│  │ = +150  │  │   120   │           │
+│  │ Net     │  │ Mvmts   │           │
+│  └─────────┘  └─────────┘           │
+├─────────────────────────────────────┤
+│  ⚠️ Ruptures de stock (3)           │
+│  ┌─────────────────────────────────┐│
+│  │ Produit B - SKU: PROD-002      ││
+│  │ Produit C - SKU: PROD-003      ││
+│  └─────────────────────────────────┘│
+├─────────────────────────────────────┤
+│  ⚠️ Stock bas (2)                   │
+│  ┌─────────────────────────────────┐│
+│  │ Produit A - Stock: 5/10        ││
+│  └─────────────────────────────────┘│
+├─────────────────────────────────────┤
+│  📋 Mouvements Récents              │
+│  ┌─────────────────────────────────┐│
+│  │ ↑ Achat - Produit A   +50     ││
+│  │ ↓ Vente - Produit B   -10     ││
+│  └─────────────────────────────────┘│
+└─────────────────────────────────────┘
+```
+
+#### g) NOUVEAU: Alertes Stock (`StockAlertsScreen`)
+
+```
+┌─────────────────────────────────────┐
+│  🚨 Alertes de Stock                │
+├─────────────────────────────────────┤
+│  [Toutes] [Ruptures] [Stock bas]    │
+├─────────────────────────────────────┤
+│  [🔍 Recherche...              ]    │
+├─────────────────────────────────────┤
+│  Résumé: 3 ruptures, 2 stock bas    │
+├─────────────────────────────────────┤
+│  ┌─────────────────────────────────┐│
+│  │ 🔴 Produit B                   ││
+│  │ SKU: PROD-002  Stock: 0        ││
+│  │ Catégorie: Vêtements           ││
+│  └─────────────────────────────────┘│
+│  ┌─────────────────────────────────┐│
+│  │ 🟠 Produit A                   ││
+│  │ SKU: PROD-001  Stock: 5/10     ││
+│  │ Catégorie: Accessoires         ││
+│  └─────────────────────────────────┘│
+└─────────────────────────────────────┘
+```
+
 ---
 
 ### 5. Widgets réutilisables
@@ -387,26 +849,40 @@ class StockLevelBadge extends StatelessWidget {
 ```
 lib/
 ├── models/
-│   ├── sales_statistics.dart      # NOUVEAU
-│   ├── grouped_movement.dart      # NOUVEAU
-│   └── movement_summary.dart      # NOUVEAU
+│   ├── sales_statistics.dart      # Statistiques de ventes
+│   ├── grouped_movement.dart      # Mouvements groupés
+│   ├── movement_summary.dart      # Résumé mouvement
+│   ├── stock_overview.dart        # NOUVEAU - État du stock
+│   ├── stock_dashboard.dart       # NOUVEAU - Dashboard stock
+│   ├── stock_alert.dart           # NOUVEAU - Alertes stock
+│   └── stock_variant.dart         # NOUVEAU - Variante avec stock
 ├── services/
-│   ├── sales_service.dart         # Mise à jour
-│   └── stock_service.dart         # Mise à jour
+│   ├── sales_service.dart         # Service ventes
+│   └── stock_service.dart         # Service stock (enrichi)
 ├── providers/ (ou blocs/)
-│   ├── sales_stats_provider.dart  # NOUVEAU
-│   └── grouped_movements_provider.dart  # NOUVEAU
+│   ├── sales_stats_provider.dart
+│   ├── grouped_movements_provider.dart
+│   ├── stock_overview_provider.dart    # NOUVEAU
+│   ├── stock_dashboard_provider.dart   # NOUVEAU
+│   └── stock_alerts_provider.dart      # NOUVEAU
 ├── screens/
 │   ├── sales/
-│   │   ├── sales_stats_screen.dart     # NOUVEAU
-│   │   └── sales_history_screen.dart   # Mise à jour
+│   │   ├── sales_stats_screen.dart
+│   │   └── sales_history_screen.dart
 │   └── stock/
-│       └── stock_movements_screen.dart # Mise à jour
+│       ├── stock_movements_screen.dart
+│       ├── stock_overview_screen.dart  # NOUVEAU
+│       ├── stock_dashboard_screen.dart # NOUVEAU
+│       └── stock_alerts_screen.dart    # NOUVEAU
 └── widgets/
-    ├── period_selector.dart       # NOUVEAU
-    ├── stats_card.dart            # NOUVEAU
-    ├── movement_summary_card.dart # NOUVEAU
-    └── stock_level_badge.dart     # NOUVEAU
+    ├── period_selector.dart
+    ├── stats_card.dart
+    ├── kpi_card.dart              # NOUVEAU
+    ├── movement_summary_card.dart
+    ├── stock_level_badge.dart
+    ├── stock_variant_card.dart    # NOUVEAU
+    ├── alert_item.dart            # NOUVEAU
+    └── movement_item.dart         # NOUVEAU
 ```
 
 ---
@@ -417,8 +893,11 @@ lib/
 |----------|-------|---------------|
 | 🔴 1 | Modèles et Services | Foundation technique |
 | 🔴 2 | Statistiques des ventes | Haute valeur UX |
-| 🟡 3 | Vue groupée mouvements | Cohérence avec web |
-| 🟢 4 | Filtres additionnels | Amélioration UX |
+| 🔴 3 | État du stock (overview) | Vue principale stock |
+| 🟡 4 | Dashboard stock | Analyse des mouvements |
+| 🟡 5 | Alertes stock | Gestion proactive |
+| 🟢 6 | Vue groupée mouvements | Cohérence avec web |
+| 🟢 7 | Filtres additionnels | Amélioration UX |
 
 ---
 
@@ -452,6 +931,29 @@ final response = await dio.get('/api/mobile/stock/movements/grouped', queryParam
   'date_to': '2026-01-28',
 });
 final grouped = GroupedMovementsResponse.fromJson(response.data['data']);
+
+// NOUVEAU: État du stock avec pagination
+final response = await dio.get('/api/mobile/stock/overview', queryParameters: {
+  'per_page': 20,
+  'category_id': 5,
+  'stock_level': 'low_stock',
+  'search': 'produit',
+});
+final overview = StockOverviewResponse.fromJson(response.data['data']);
+
+// NOUVEAU: Dashboard stock
+final response = await dio.get('/api/mobile/stock/dashboard', queryParameters: {
+  'date_from': '2026-01-01',
+  'date_to': '2026-01-28',
+});
+final dashboard = StockDashboardResponse.fromJson(response.data['data']);
+
+// NOUVEAU: Liste alertes paginée
+final response = await dio.get('/api/mobile/stock/alerts/list', queryParameters: {
+  'per_page': 15,
+  'alert_type': 'out_of_stock',
+});
+final alerts = StockAlertsListResponse.fromJson(response.data['data']);
 
 // Produits avec filtre stock
 final response = await dio.get('/api/mobile/products', queryParameters: {

@@ -305,4 +305,367 @@ class MobileStockReportController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Vue d'ensemble du stock (cohérent avec Livewire StockOverview)
+     *
+     * GET /api/mobile/stock/overview
+     * 
+     * Retourne les KPIs + liste des variantes avec filtres et pagination
+     */
+    public function overview(Request $request): JsonResponse
+    {
+        try {
+            $stockOverviewService = app(\App\Services\StockOverviewService::class);
+
+            // Récupérer les KPIs
+            $kpis = $stockOverviewService->calculateKPIs();
+
+            // Préparer les filtres
+            $filters = [
+                'search' => $request->input('search'),
+                'category_id' => $request->input('category_id'),
+                'stock_level' => $request->input('stock_level'), // in_stock, low_stock, out_of_stock
+                'sort_field' => $request->input('sort_by', 'stock_quantity'),
+                'sort_direction' => $request->input('sort_dir', 'asc'),
+            ];
+
+            // Récupérer les variantes avec filtres
+            $variants = $stockOverviewService->getInventoryVariants($filters);
+
+            // Pagination manuelle
+            $perPage = min(max((int) $request->input('per_page', 20), 10), 100);
+            $page = max((int) $request->input('page', 1), 1);
+            $total = $variants->count();
+            $paginatedVariants = $variants->slice(($page - 1) * $perPage, $perPage)->values();
+
+            // Récupérer les catégories pour les filtres
+            $categories = $stockOverviewService->getCategories();
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'kpis' => [
+                        'total_stock_value' => $kpis['total_stock_value'],
+                        'total_stock_value_formatted' => number_format($kpis['total_stock_value'], 2, ',', ' '),
+                        'total_retail_value' => $kpis['total_retail_value'],
+                        'total_retail_value_formatted' => number_format($kpis['total_retail_value'], 2, ',', ' '),
+                        'potential_profit' => $kpis['potential_profit'],
+                        'potential_profit_formatted' => number_format($kpis['potential_profit'], 2, ',', ' '),
+                        'profit_margin_percentage' => $kpis['profit_margin_percentage'],
+                        'total_products' => $kpis['total_products'],
+                        'in_stock_count' => $kpis['in_stock_count'],
+                        'out_of_stock_count' => $kpis['out_of_stock_count'],
+                        'low_stock_count' => $kpis['low_stock_count'],
+                        'total_units' => $kpis['total_units'],
+                    ],
+                    'variants' => $paginatedVariants->map(fn($variant) => $this->formatVariant($variant)),
+                    'categories' => $categories->map(fn($cat) => [
+                        'id' => $cat->id,
+                        'name' => $cat->name,
+                    ]),
+                    'pagination' => [
+                        'current_page' => $page,
+                        'last_page' => (int) ceil($total / $perPage),
+                        'per_page' => $perPage,
+                        'total' => $total,
+                    ],
+                    'filters' => $filters,
+                ],
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de la récupération de l\'aperçu du stock',
+                'error' => config('app.debug') ? $e->getMessage() : null,
+            ], 500);
+        }
+    }
+
+    /**
+     * Tableau de bord du stock (cohérent avec Livewire StockDashboard)
+     *
+     * GET /api/mobile/stock/dashboard
+     * 
+     * Retourne les statistiques de mouvements, produits en alerte et mouvements récents
+     */
+    public function dashboard(Request $request): JsonResponse
+    {
+        try {
+            $variantRepository = app(\App\Repositories\ProductVariantRepository::class);
+            $movementRepository = app(\App\Repositories\StockMovementRepository::class);
+
+            // Dates par défaut : ce mois
+            $dateFrom = $request->input('date_from', now()->startOfMonth()->format('Y-m-d'));
+            $dateTo = $request->input('date_to', now()->format('Y-m-d'));
+
+            // Statistiques des mouvements
+            $stats = $movementRepository->statistics($dateFrom, $dateTo);
+
+            // Produits en stock bas (limit 5)
+            $lowStockQuery = $variantRepository->query()
+                ->with('product')
+                ->where('stock_quantity', '>', 0)
+                ->whereRaw('stock_quantity <= low_stock_threshold');
+
+            if (current_store_id()) {
+                $lowStockQuery->whereHas('product', function($q) {
+                    $q->where('store_id', current_store_id());
+                });
+            }
+
+            $lowStockProducts = $lowStockQuery->orderBy('stock_quantity', 'asc')
+                ->limit(5)
+                ->get();
+
+            // Produits en rupture (limit 5)
+            $outOfStockQuery = $variantRepository->query()
+                ->with('product')
+                ->where('stock_quantity', '<=', 0);
+
+            if (current_store_id()) {
+                $outOfStockQuery->whereHas('product', function($q) {
+                    $q->where('store_id', current_store_id());
+                });
+            }
+
+            $outOfStockProducts = $outOfStockQuery->limit(5)->get();
+
+            // Mouvements récents (limit 10)
+            $recentMovementsQuery = $movementRepository->query()
+                ->with(['productVariant.product', 'user'])
+                ->whereBetween('date', [$dateFrom, $dateTo]);
+
+            if (current_store_id()) {
+                $recentMovementsQuery->where('store_id', current_store_id());
+            }
+
+            $recentMovements = $recentMovementsQuery->orderBy('date', 'desc')
+                ->limit(10)
+                ->get();
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'period' => [
+                        'date_from' => $dateFrom,
+                        'date_to' => $dateTo,
+                    ],
+                    'stats' => [
+                        'total_in' => $stats['total_in'],
+                        'total_out' => $stats['total_out'],
+                        'net_movement' => $stats['net_movement'],
+                        'total_value_in' => $stats['total_value_in'],
+                        'total_value_in_formatted' => number_format($stats['total_value_in'], 2, ',', ' '),
+                        'total_value_out' => $stats['total_value_out'],
+                        'total_value_out_formatted' => number_format($stats['total_value_out'], 2, ',', ' '),
+                        'total_movements' => $stats['total_movements'],
+                    ],
+                    'low_stock_products' => $lowStockProducts->map(fn($v) => [
+                        'id' => $v->id,
+                        'product_id' => $v->product_id,
+                        'product_name' => $v->product->name ?? 'N/A',
+                        'variant_name' => $v->full_name ?? $v->sku,
+                        'sku' => $v->sku,
+                        'stock_quantity' => $v->stock_quantity,
+                        'low_stock_threshold' => $v->low_stock_threshold,
+                        'status' => 'low_stock',
+                    ]),
+                    'out_of_stock_products' => $outOfStockProducts->map(fn($v) => [
+                        'id' => $v->id,
+                        'product_id' => $v->product_id,
+                        'product_name' => $v->product->name ?? 'N/A',
+                        'variant_name' => $v->full_name ?? $v->sku,
+                        'sku' => $v->sku,
+                        'stock_quantity' => $v->stock_quantity,
+                        'status' => 'out_of_stock',
+                    ]),
+                    'recent_movements' => $recentMovements->map(fn($m) => [
+                        'id' => $m->id,
+                        'type' => $m->type,
+                        'type_label' => $m->type === 'in' ? 'Entrée' : 'Sortie',
+                        'movement_type' => $m->movement_type,
+                        'quantity' => $m->quantity,
+                        'reference' => $m->reference,
+                        'date' => $m->date?->format('Y-m-d'),
+                        'product_variant' => $m->productVariant ? [
+                            'id' => $m->productVariant->id,
+                            'sku' => $m->productVariant->sku,
+                            'product_name' => $m->productVariant->product?->name,
+                        ] : null,
+                        'user' => $m->user ? [
+                            'id' => $m->user->id,
+                            'name' => $m->user->name,
+                        ] : null,
+                    ]),
+                    'alerts_summary' => [
+                        'low_stock_count' => $lowStockProducts->count(),
+                        'out_of_stock_count' => $outOfStockProducts->count(),
+                        'total_alerts' => $lowStockProducts->count() + $outOfStockProducts->count(),
+                    ],
+                ],
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de la récupération du tableau de bord stock',
+                'error' => config('app.debug') ? $e->getMessage() : null,
+            ], 500);
+        }
+    }
+
+    /**
+     * Liste paginée des alertes de stock (cohérent avec Livewire StockAlerts)
+     *
+     * GET /api/mobile/stock/alerts/list
+     * 
+     * Retourne la liste paginée des variantes en alerte avec filtres
+     */
+    public function alertsList(Request $request): JsonResponse
+    {
+        try {
+            $variantRepository = app(\App\Repositories\ProductVariantRepository::class);
+
+            $alertType = $request->input('alert_type', 'all'); // all, out_of_stock, low_stock
+            $search = $request->input('search');
+            $perPage = min(max((int) $request->input('per_page', 20), 10), 100);
+
+            $query = $variantRepository->query()
+                ->with('product');
+
+            // Filtre par store actuel
+            if (current_store_id()) {
+                $query->whereHas('product', function($q) {
+                    $q->where('store_id', current_store_id());
+                });
+            }
+
+            // Filtre par type d'alerte
+            if ($alertType === 'out_of_stock') {
+                $query->where('stock_quantity', '<=', 0);
+            } elseif ($alertType === 'low_stock') {
+                $query->where('stock_quantity', '>', 0)
+                      ->whereColumn('stock_quantity', '<=', 'low_stock_threshold');
+            } else {
+                // all - rupture OU stock bas
+                $query->where(function($q) {
+                    $q->where('stock_quantity', '<=', 0)
+                      ->orWhereColumn('stock_quantity', '<=', 'low_stock_threshold');
+                });
+            }
+
+            // Recherche
+            if ($search) {
+                $query->where(function($q) use ($search) {
+                    $q->whereHas('product', function($pq) use ($search) {
+                        $pq->where('name', 'like', '%' . $search . '%')
+                           ->orWhere('sku', 'like', '%' . $search . '%');
+                    })->orWhere('sku', 'like', '%' . $search . '%');
+                });
+            }
+
+            // Compter par type d'alerte
+            $outOfStockCount = (clone $query)->where('stock_quantity', '<=', 0)->count();
+            
+            // Pour low_stock, il faut reconstruire la condition
+            $lowStockCountQuery = $variantRepository->query()
+                ->with('product')
+                ->where('stock_quantity', '>', 0)
+                ->whereColumn('stock_quantity', '<=', 'low_stock_threshold');
+            
+            if (current_store_id()) {
+                $lowStockCountQuery->whereHas('product', function($q) {
+                    $q->where('store_id', current_store_id());
+                });
+            }
+            $lowStockCount = $lowStockCountQuery->count();
+
+            // Pagination
+            $variants = $query->orderBy('stock_quantity', 'asc')
+                              ->paginate($perPage);
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'variants' => $variants->map(fn($v) => [
+                        'id' => $v->id,
+                        'product_id' => $v->product_id,
+                        'product_name' => $v->product->name ?? 'N/A',
+                        'variant_name' => $v->full_name ?? $v->sku,
+                        'sku' => $v->sku,
+                        'stock_quantity' => $v->stock_quantity,
+                        'low_stock_threshold' => $v->low_stock_threshold,
+                        'status' => $v->stock_quantity <= 0 ? 'out_of_stock' : 'low_stock',
+                        'status_label' => $v->stock_quantity <= 0 ? 'Rupture' : 'Stock bas',
+                        'product' => [
+                            'id' => $v->product->id,
+                            'name' => $v->product->name,
+                            'reference' => $v->product->reference,
+                            'category' => $v->product->category?->name,
+                        ],
+                    ]),
+                    'summary' => [
+                        'out_of_stock_count' => $outOfStockCount,
+                        'low_stock_count' => $lowStockCount,
+                        'total_alerts' => $outOfStockCount + $lowStockCount,
+                    ],
+                    'filters' => [
+                        'alert_type' => $alertType,
+                        'search' => $search,
+                    ],
+                    'pagination' => [
+                        'current_page' => $variants->currentPage(),
+                        'last_page' => $variants->lastPage(),
+                        'per_page' => $variants->perPage(),
+                        'total' => $variants->total(),
+                    ],
+                ],
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de la récupération des alertes',
+                'error' => config('app.debug') ? $e->getMessage() : null,
+            ], 500);
+        }
+    }
+
+    /**
+     * Formater une variante pour la réponse API
+     */
+    private function formatVariant($variant): array
+    {
+        $currentStoreId = current_store_id();
+        $storeQty = $currentStoreId !== null ? $variant->getStoreStock($currentStoreId) : $variant->stock_quantity;
+
+        // Déterminer le statut
+        $status = 'in_stock';
+        if ($storeQty <= 0) {
+            $status = 'out_of_stock';
+        } elseif ($storeQty <= $variant->low_stock_threshold) {
+            $status = 'low_stock';
+        }
+
+        return [
+            'id' => $variant->id,
+            'product_id' => $variant->product_id,
+            'sku' => $variant->sku,
+            'barcode' => $variant->barcode,
+            'product_name' => $variant->product->name ?? 'N/A',
+            'variant_name' => $variant->full_name ?? $variant->sku,
+            'category' => $variant->product->category?->name,
+            'stock_quantity' => $storeQty,
+            'low_stock_threshold' => $variant->low_stock_threshold,
+            'status' => $status,
+            'status_label' => match($status) {
+                'out_of_stock' => 'Rupture',
+                'low_stock' => 'Stock bas',
+                default => 'En stock',
+            },
+            'cost_price' => $variant->product->cost_price ?? 0,
+            'price' => $variant->product->price ?? 0,
+            'stock_value' => $storeQty * ($variant->product->cost_price ?? 0),
+            'retail_value' => $storeQty * ($variant->product->price ?? 0),
+        ];
+    }
 }

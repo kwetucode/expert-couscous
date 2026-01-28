@@ -115,7 +115,10 @@ Route::middleware('auth:sanctum')->group(function () {
         // ===== Rapports de Stock =====
         Route::prefix('stock')->name('stock.')->group(function () {
             Route::get('/alerts', [MobileStockReportController::class, 'alerts'])->name('alerts');
+            Route::get('/alerts/list', [MobileStockReportController::class, 'alertsList'])->name('alerts.list');
             Route::get('/summary', [MobileStockReportController::class, 'summary'])->name('summary');
+            Route::get('/overview', [MobileStockReportController::class, 'overview'])->name('overview');
+            Route::get('/dashboard', [MobileStockReportController::class, 'dashboard'])->name('dashboard');
             Route::get('/low-stock', [MobileStockReportController::class, 'lowStock'])->name('low-stock');
             Route::get('/out-of-stock', [MobileStockReportController::class, 'outOfStock'])->name('out-of-stock');
             Route::get('/value', [MobileStockReportController::class, 'stockValue'])->name('value');
