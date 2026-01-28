@@ -46,19 +46,53 @@ class MobileStockReportController extends Controller
     }
 
     /**
-     * Résumé du stock
+     * Résumé du stock (cohérent avec Livewire StockOverview)
      *
      * GET /api/mobile/stock/summary
+     * 
+     * Retourne les mêmes KPIs que la vue Livewire État du Stock :
+     * - total_products : nombre total de variantes
+     * - in_stock_count : variantes avec stock > 0
+     * - out_of_stock_count : variantes en rupture (stock <= 0)
+     * - low_stock_count : variantes en stock faible
+     * - total_stock_value : valeur totale du stock (coût)
+     * - total_retail_value : valeur de vente potentielle
+     * - total_units : nombre total d'unités en stock
      */
     public function summary(Request $request): JsonResponse
     {
         try {
             $user = Auth::user();
-            $data = $this->reportService->getStockSummary($user);
+            
+            // Utiliser StockOverviewService pour cohérence avec Livewire
+            $stockOverviewService = app(\App\Services\StockOverviewService::class);
+            $kpis = $stockOverviewService->calculateKPIs();
 
             return response()->json([
                 'success' => true,
-                'data' => $data,
+                'data' => [
+                    'kpis' => [
+                        'total_products' => $kpis['total_products'],
+                        'in_stock_count' => $kpis['in_stock_count'],
+                        'out_of_stock_count' => $kpis['out_of_stock_count'],
+                        'low_stock_count' => $kpis['low_stock_count'],
+                        'total_units' => $kpis['total_units'],
+                    ],
+                    'value' => [
+                        'total_stock_value' => $kpis['total_stock_value'],
+                        'total_stock_value_formatted' => number_format($kpis['total_stock_value'], 2, ',', ' '),
+                        'total_retail_value' => $kpis['total_retail_value'],
+                        'total_retail_value_formatted' => number_format($kpis['total_retail_value'], 2, ',', ' '),
+                        'potential_profit' => $kpis['potential_profit'],
+                        'potential_profit_formatted' => number_format($kpis['potential_profit'], 2, ',', ' '),
+                        'profit_margin_percentage' => $kpis['profit_margin_percentage'],
+                    ],
+                    'alerts' => [
+                        'total' => $kpis['out_of_stock_count'] + $kpis['low_stock_count'],
+                        'out_of_stock' => $kpis['out_of_stock_count'],
+                        'low_stock' => $kpis['low_stock_count'],
+                    ],
+                ],
             ]);
         } catch (\Exception $e) {
             return response()->json([
