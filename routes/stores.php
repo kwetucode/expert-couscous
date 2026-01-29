@@ -28,8 +28,8 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/{storeId}/edit', StoreEdit::class)->name('edit')->middleware('permission:stores.edit');
         Route::get('/{storeId}', StoreShow::class)->name('show');
 
-        // Changer de magasin
-        Route::post('/switch/{store}', [StoreController::class, 'switch'])->name('switch');
+        // Changer de magasin (store peut être null pour "Tous les magasins")
+        Route::post('/switch/{store?}', [StoreController::class, 'switch'])->name('switch');
     });
 
     // ===== Gestion des Transferts =====

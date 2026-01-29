@@ -268,20 +268,51 @@ class StoreApiController extends Controller
 
     /**
      * Switch user's current store
+     * Pass null or 'null' as id to view all stores (admin only)
      *
      * @param Request $request
-     * @param int $id
+     * @param string|null $id
      * @return JsonResponse
      */
-    public function switchStore(Request $request, int $id): JsonResponse
+    public function switchStore(Request $request, ?string $id = null): JsonResponse
     {
         try {
-            $this->storeService->switchUserStore(auth()->id(), $id);
+            $user = auth()->user();
+
+            // Si id est "null" ou vide, c'est pour voir tous les stores
+            if ($id === 'null' || $id === '' || $id === null) {
+                // Vérifier que l'utilisateur est admin
+                if (!$user->isAdmin()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Vous n\'avez pas les droits pour voir tous les magasins',
+                    ], 403);
+                }
+
+                // Mettre à null pour voir tous les stores
+                $user->update(['current_store_id' => null]);
+
+                // Forcer la re-authentification
+                auth()->setUser($user->fresh());
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Affichage de tous les magasins',
+                    'current_store_id' => null,
+                ]);
+            }
+
+            // Convertir en int pour un store spécifique
+            $storeId = (int) $id;
+            $this->storeService->switchUserStore(auth()->id(), $storeId);
+
+            // Forcer la re-authentification
+            auth()->setUser(auth()->user()->fresh());
 
             return response()->json([
                 'success' => true,
                 'message' => 'Store switched successfully',
-                'current_store_id' => $id,
+                'current_store_id' => $storeId,
             ]);
         } catch (\Exception $e) {
             return response()->json([

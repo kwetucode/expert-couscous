@@ -33,13 +33,44 @@ class StoreController extends Controller
 
     /**
      * Switch current store for authenticated user
+     * Pass null to view all stores (admin only)
      */
-    public function switch(Request $request, int $storeId)
+    public function switch(Request $request, ?string $storeId = null)
     {
-        $action = app(SwitchUserStoreAction::class);
-
         try {
-            $action->execute(auth()->id(), $storeId);
+            $user = auth()->user();
+
+            // Si storeId est "null" ou vide, c'est pour voir tous les stores
+            if ($storeId === 'null' || $storeId === '' || $storeId === null) {
+                // Vérifier que l'utilisateur est admin
+                if (!$user->isAdmin()) {
+                    return redirect()->back()->with('error', 'Vous n\'avez pas les droits pour voir tous les magasins');
+                }
+
+                // Mettre à null pour voir tous les stores
+                $user->update(['current_store_id' => null]);
+
+                // Forcer la re-authentification
+                auth()->setUser($user->fresh());
+
+                // Mettre à jour la session
+                session()->put('current_store_id', null);
+                session()->save();
+
+                return redirect()->back()->with('success', 'Affichage de tous les magasins');
+            }
+
+            // Convertir en int pour un store spécifique
+            $storeIdInt = (int) $storeId;
+            $action = app(SwitchUserStoreAction::class);
+            $action->execute(auth()->id(), $storeIdInt);
+
+            // Forcer la re-authentification
+            auth()->setUser(auth()->user()->fresh());
+
+            // Mettre à jour la session
+            session()->put('current_store_id', $storeIdInt);
+            session()->save();
 
             return redirect()->back()->with('success', 'Magasin changé avec succès');
         } catch (\Exception $e) {

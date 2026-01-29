@@ -73,7 +73,7 @@ Route::middleware('auth:sanctum')->group(function () {
         // Store actions
         Route::post('/{id}/assign-user', [StoreApiController::class, 'assignUser'])->name('assign-user');
         Route::delete('/{storeId}/remove-user/{userId}', [StoreApiController::class, 'removeUser'])->name('remove-user');
-        Route::post('/{id}/switch', [StoreApiController::class, 'switchStore'])->name('switch');
+        Route::post('/{id?}/switch', [StoreApiController::class, 'switchStore'])->name('switch');
 
         // Store stock
         Route::get('/{id}/stock', [StoreApiController::class, 'stock'])->name('stock');
