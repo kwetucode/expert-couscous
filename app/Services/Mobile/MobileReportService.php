@@ -249,8 +249,8 @@ class MobileReportService
                     'total' => $stockStats['low_stock_alerts'] + $stockStats['out_of_stock_alerts'],
                 ],
                 'value' => [
-                    'total' => $stockStats['total_stock_value'],
-                    'formatted' => number_format($stockStats['total_stock_value'], 2, ',', ' '),
+                    'total' => (float) $stockStats['total_stock_value'],
+                    'formatted' => number_format((float) $stockStats['total_stock_value'], 2, ',', ' '),
                 ],
             ];
         });
@@ -346,7 +346,7 @@ class MobileReportService
             ->pluck('alerts_count', 'store_id');
 
         return $stores->map(function ($store) use ($salesByStore, $alertsByStore) {
-            $todaySales = $salesByStore[$store->id] ?? 0;
+            $todaySales = (float) ($salesByStore[$store->id] ?? 0);
             return [
                 'id' => $store->id,
                 'name' => $store->name,
