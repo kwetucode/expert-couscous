@@ -252,7 +252,7 @@ jobs:
             php artisan optimize:clear
         # Exécute des commandes Laravel sur le serveur distant (migrations, cache, etc.)
 
-      - name: 📄 Copy index.php, .htaccess and robots.txt to root
+      - name: 📄 Setup root files for Hostinger
         uses: appleboy/ssh-action@v1.1.0
         with:
           host: ${{ secrets.SSH_HOST }}
@@ -260,7 +260,37 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT }}
           script: |
-            [ -f ${{ secrets.DEPLOY_PATH }}/index.php ] || cp ${{ secrets.DEPLOY_PATH }}/public/index.php ${{ secrets.DEPLOY_PATH }}/index.php
-            [ -f ${{ secrets.DEPLOY_PATH }}/robots.txt ] || cp ${{ secrets.DEPLOY_PATH }}/public/robots.txt ${{ secrets.DEPLOY_PATH }}/robots.txt
-            [ -f ${{ secrets.DEPLOY_PATH }}/.htaccess ] || cp ${{ secrets.DEPLOY_PATH }}/public/.htaccess ${{ secrets.DEPLOY_PATH }}/.htaccess
-        # Copie certains fichiers du dossier public à la racine si besoin
+            cd ${{ secrets.DEPLOY_PATH }}
+            
+            # Create proper index.php for root (not public folder)
+            cat > index.php << 'PHPEOF'
+            <?php
+            
+            use Illuminate\Http\Request;
+            
+            define('LARAVEL_START', microtime(true));
+            
+            // Determine if the application is in maintenance mode...
+            if (file_exists($maintenance = __DIR__.'/storage/framework/maintenance.php')) {
+                require $maintenance;
+            }
+            
+            // Register the Composer autoloader...
+            require __DIR__.'/vendor/autoload.php';
+            
+            // Bootstrap Laravel and handle the request...
+            (require_once __DIR__.'/bootstrap/app.php')
+                ->handleRequest(Request::capture());
+            PHPEOF
+            
+            # Copy .htaccess if not exists
+            [ -f .htaccess ] || cp public/.htaccess .htaccess
+            
+            # Copy robots.txt if not exists  
+            [ -f robots.txt ] || cp public/robots.txt robots.txt
+            
+            # Set correct permissions
+            chmod 644 index.php .htaccess robots.txt
+            chmod -R 755 storage bootstrap/cache
+            chmod -R 644 storage/logs/*.log 2>/dev/null || true
+        # Configure les fichiers racine pour Hostinger
