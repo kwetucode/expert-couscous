@@ -277,7 +277,9 @@ class PaymentModal extends Component
         session()->flash('success', 'Paiement Mobile Money confirmé avec succès ! Bienvenue à bord 🎉');
 
         $this->showModal = false;
-        $this->redirect(route('dashboard'), navigate: true);
+        
+        // Forcer une redirection complète (pas navigate)
+        $this->redirectRoute('dashboard');
     }
 
     /**
