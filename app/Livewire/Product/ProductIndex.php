@@ -322,7 +322,7 @@ class ProductIndex extends Component
 
         return view('livewire.product.product-index', [
             'products' => $products,
-            'categories' => $categoryRepository->all(),
+            'categories' => $categoryRepository->allGlobal(),
             'kpis' => $kpiService->calculateAllKPIs(),
             'canAddProduct' => $canAddProduct,
             'productsUsage' => $productsUsage,
