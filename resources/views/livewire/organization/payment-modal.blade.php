@@ -312,27 +312,20 @@
                             <!-- Payment Methods -->
                             <h4 class="text-xs font-medium text-gray-500 mb-2 uppercase tracking-wide">Mode de paiement</h4>
                             <div class="flex gap-2 mb-4">
-                                <!-- Credit Card Option -->
+                                <!-- Credit Card Option (Disabled - Coming Soon) -->
                                 <button
-                                    wire:click="$set('paymentMethod', 'card')"
-                                    @if($pendingTransactionId) disabled @endif
-                                    class="flex-1 relative flex items-center p-2.5 border-2 rounded-lg transition-all
-                                        {{ $paymentMethod === 'card' ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50' }}
-                                        {{ $pendingTransactionId ? 'opacity-50 cursor-not-allowed' : '' }}">
-                                    <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-2">
-                                        <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    type="button"
+                                    disabled
+                                    class="flex-1 relative flex items-center p-2.5 border-2 rounded-lg transition-all border-gray-200 bg-gray-50 opacity-60 cursor-not-allowed">
+                                    <div class="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center mr-2">
+                                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
                                         </svg>
                                     </div>
                                     <div class="text-left">
-                                        <span class="font-medium text-gray-900 text-xs">Carte Bancaire</span>
-                                        <span class="block text-xs text-gray-400">Visa, Mastercard</span>
+                                        <span class="font-medium text-gray-500 text-xs">Carte Bancaire</span>
+                                        <span class="block text-xs text-orange-500">Bientôt disponible</span>
                                     </div>
-                                    @if($paymentMethod === 'card')
-                                    <svg class="w-4 h-4 text-indigo-600 absolute top-1.5 right-1.5" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                                    </svg>
-                                    @endif
                                 </button>
 
                                 <!-- Mobile Money Option -->
