@@ -20,19 +20,13 @@ class CategoryRepository
     }
 
     /**
-     * Get all global categories (without organization filtering).
-     * Only filters by service type based on current organization.
+     * Get all categories globally (without organization filtering).
+     * Shows all active categories regardless of organization.
      * Used for product forms where categories are managed by super admin.
      */
     public function allGlobal(): Collection
     {
-        $isServiceOrg = is_service_organization();
-        
         return Category::query()
-            ->whereNull('organization_id') // Only global categories managed by super admin
-            ->whereHas('productType', function ($query) use ($isServiceOrg) {
-                $query->where('is_service', $isServiceOrg);
-            })
             ->where('is_active', true)
             ->orderBy('name')
             ->get();
@@ -51,13 +45,13 @@ class CategoryRepository
     }
 
     /**
-     * Get global categories for a specific product type.
+     * Get categories for a specific product type globally.
+     * Shows all active categories for the given type regardless of organization.
      * Used for product forms where categories are managed by super admin.
      */
     public function getByProductTypeGlobal(int $productTypeId): Collection
     {
         return Category::query()
-            ->whereNull('organization_id') // Only global categories
             ->where('product_type_id', $productTypeId)
             ->where('is_active', true)
             ->orderBy('name')

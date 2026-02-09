@@ -29,17 +29,13 @@ class ProductTypeRepository
 
     /**
      * Get all active product types globally (without organization filtering).
-     * Only filters by is_service based on current organization type.
+     * Shows all active product types regardless of organization.
      * Used for product forms where types are managed by super admin.
      */
     public function allActiveGlobal(): Collection
     {
-        $isServiceOrg = is_service_organization();
-        
         return ProductType::query()
-            ->whereNull('organization_id') // Only global types managed by super admin
             ->where('is_active', true)
-            ->where('is_service', $isServiceOrg)
             ->ordered()
             ->get();
     }
