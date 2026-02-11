@@ -17,6 +17,7 @@ class ProductTypeForm extends Form
     public bool $has_dimensions = false;
     public bool $has_serial_number = false;
     public bool $is_active = true;
+    public bool $is_service = false;
     public int $display_order = 0;
 
     protected function rules(): array
@@ -33,6 +34,7 @@ class ProductTypeForm extends Form
             'has_dimensions' => 'boolean',
             'has_serial_number' => 'boolean',
             'is_active' => 'boolean',
+            'is_service' => 'boolean',
             'display_order' => 'nullable|integer',
         ];
     }
@@ -57,6 +59,7 @@ class ProductTypeForm extends Form
         $this->has_dimensions = $productType->has_dimensions ?? false;
         $this->has_serial_number = $productType->has_serial_number ?? false;
         $this->is_active = $productType->is_active ?? true;
+        $this->is_service = $productType->is_service ?? false;
         $this->display_order = $productType->display_order ?? 0;
     }
 
@@ -75,6 +78,7 @@ class ProductTypeForm extends Form
             $this->has_dimensions = false;
             $this->has_serial_number = false;
             $this->is_active = true;
+            $this->is_service = false;
             $this->display_order = 0;
         } else {
             // Reset partiel
@@ -96,6 +100,7 @@ class ProductTypeForm extends Form
             'has_dimensions' => $this->has_dimensions,
             'has_serial_number' => $this->has_serial_number,
             'is_active' => $this->is_active,
+            'is_service' => $this->is_service,
             'display_order' => $this->display_order,
         ];
     }

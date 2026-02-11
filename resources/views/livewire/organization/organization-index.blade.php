@@ -1,4 +1,4 @@
-<div x-data="{ showDeleteModal: false, orgToDelete: null, orgName: '' }"
+<div x-data="{ showDeleteModal: false, orgToDelete: null, orgName: '', showSyncModal: false, orgToSync: null, syncOrgName: '' }"
      wire:poll.30s
      @organization-created.window="$wire.$refresh()"
      @organization-updated.window="$wire.$refresh()"
@@ -320,6 +320,21 @@
                                 >
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                </x-form.button>
+
+                            @endif
+
+                            {{-- Sync Product Types & Categories Button (Admin or Super Admin) --}}
+                            @if(auth()->user()->isSuperAdmin() || auth()->user()->isOrganizationAdmin($organization))
+                                <x-form.button
+                                    @click="showSyncModal = true; orgToSync = {{ $organization->id }}; syncOrgName = '{{ addslashes($organization->name) }}'"
+                                    variant="secondary"
+                                    size="sm"
+                                    title="Synchroniser les types de produits et catégories"
+                                >
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                                     </svg>
                                 </x-form.button>
                             @endif
@@ -680,4 +695,22 @@
             </x-ui.alpine-modal>
         </div>
     @endif
+
+    {{-- Sync Confirmation Modal --}}
+    <x-confirmation-modal
+        show="showSyncModal"
+        title="Synchroniser les types et catégories"
+        icon-color="indigo"
+        confirm-text="Synchroniser"
+        on-confirm="$wire.syncProductTypesAndCategories(orgToSync); showSyncModal = false; orgToSync = null; syncOrgName = ''"
+        on-cancel="showSyncModal = false; orgToSync = null; syncOrgName = ''"
+    >
+        <p>
+            Voulez-vous synchroniser les types de produits et catégories pour 
+            <span class="font-semibold text-gray-900" x-text="syncOrgName"></span> ?
+        </p>
+        <p class="mt-2 text-gray-500">
+            Les types et catégories existants ne seront pas dupliqués.
+        </p>
+    </x-confirmation-modal>
 </div>

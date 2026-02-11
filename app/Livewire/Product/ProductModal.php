@@ -307,11 +307,11 @@ class ProductModal extends Component
         $categoryRepository = app(CategoryRepository::class);
 
         if (empty($this->form->product_type_id)) {
-            // Si aucun type n'est sélectionné, afficher toutes les catégories globales
-            $this->filteredCategories = $categoryRepository->allGlobal()->toArray();
+            // Si aucun type n'est sélectionné, afficher toutes les catégories de l'organisation
+            $this->filteredCategories = $categoryRepository->all()->toArray();
         } else {
-            // Utiliser la méthode du repository pour filtrer par type (global)
-            $categories = $categoryRepository->getByProductTypeGlobal($this->form->product_type_id);
+            // Utiliser la méthode du repository pour filtrer par type (organisation courante)
+            $categories = $categoryRepository->getByProductType($this->form->product_type_id);
 
             // En mode édition, inclure la catégorie actuelle même si elle n'appartient pas au type
             if ($this->productId && $this->form->category_id) {
@@ -454,7 +454,7 @@ class ProductModal extends Component
     {
         return view('livewire.product.product-modal', [
             'categories' => $this->filteredCategories,
-            'productTypes' => $productTypeRepository->allActiveGlobal(),
+            'productTypes' => $productTypeRepository->allActive(),
         ]);
     }
 }

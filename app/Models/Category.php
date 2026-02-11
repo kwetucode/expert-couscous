@@ -163,23 +163,51 @@ class Category extends Model
     }
 
     /**
-     * Scope to filter categories based on the current organization type.
-     * - Service organizations: only see categories linked to service product types
-     * - Non-service organizations: see categories with NULL product_type_id OR linked to non-service product types
+     * Scope to filter categories for the current organization.
+     * Prioritizes organization-specific categories over global categories to avoid duplicates.
      */
     public function scopeForCurrentOrganization(Builder $query): Builder
     {
+        $organization = current_organization();
         $isServiceOrg = is_service_organization();
 
+        if (!$organization) {
+            // No organization context, filter by service type only
+            if ($isServiceOrg) {
+                return $query->whereHas('productType', function ($subQ) {
+                    $subQ->where('is_service', true);
+                });
+            }
+            return $query->where(function ($q) {
+                $q->whereNull('product_type_id')
+                  ->orWhereHas('productType', function ($subQ) {
+                      $subQ->where('is_service', false);
+                  });
+            });
+        }
+
+        // Check if organization has its own categories
+        $hasOwnCategories = static::where('organization_id', $organization->id)
+            ->where('is_active', true)
+            ->exists();
+
+        if ($hasOwnCategories) {
+            // Show only organization-specific categories (avoid duplicates with global)
+            $query->where('organization_id', $organization->id)
+                  ->where('is_active', true);
+        } else {
+            // Fallback to global categories if no org-specific categories exist yet
+            $query->whereNull('organization_id')
+                  ->where('is_active', true);
+        }
+
+        // Also filter by service type
         if ($isServiceOrg) {
-            // Service orgs only see categories linked to service product types
             return $query->whereHas('productType', function ($subQ) {
                 $subQ->where('is_service', true);
             });
         }
 
-        // Non-service orgs see categories with NULL product_type_id (backward compatibility)
-        // OR linked to non-service product types
         return $query->where(function ($q) {
             $q->whereNull('product_type_id')
               ->orWhereHas('productType', function ($subQ) {

@@ -90,6 +90,11 @@
                         </x-table.cell>
                         <x-table.cell>
                             <div class="flex flex-wrap gap-1">
+                                @if($type->is_service)
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-indigo-100 text-indigo-800">
+                                        Service
+                                    </span>
+                                @endif
                                 @if($type->has_variants)
                                     <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
                                         Variants
@@ -115,7 +120,7 @@
                                         N° Série
                                     </span>
                                 @endif
-                                @if(!$type->has_variants && !$type->has_expiry_date && !$type->has_weight && !$type->has_dimensions && !$type->has_serial_number)
+                                @if(!$type->is_service && !$type->has_variants && !$type->has_expiry_date && !$type->has_weight && !$type->has_dimensions && !$type->has_serial_number)
                                     <span class="text-xs text-gray-400">Aucune</span>
                                 @endif
                             </div>
@@ -309,6 +314,7 @@
                                 ['has_weight', 'Poids', 'Kilogrammes', 'green'],
                                 ['has_dimensions', 'Dimensions', 'L x l x H', 'purple'],
                                 ['has_serial_number', 'N° Série', 'Numéro unique', 'gray'],
+                                ['is_service', 'Service', 'Type de service', 'indigo'],
                                 ['is_active', 'Actif', 'Disponible', 'green'],
                             ] as $checkbox)
                                 <label class="flex items-center gap-3 p-3 rounded-lg border-2 cursor-pointer transition-all {{ $form->{$checkbox[0]} ? 'border-'.$checkbox[3].'-400 bg-'.$checkbox[3].'-50' : 'border-gray-200 bg-gray-50 hover:border-'.$checkbox[3].'-200' }}">

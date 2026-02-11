@@ -409,74 +409,80 @@ class OrganizationService
     public function initializeProductTypesAndCategories(Organization $organization): void
     {
         $businessActivity = $organization->business_activity?->value ?? 'mixed';
+        
+        // Déterminer si c'est une organisation de services
+        $isServiceOrg = ($businessActivity === 'services');
+        $isMixed = ($businessActivity === 'mixed');
 
         // Récupérer tous les types de produits globaux (sans organization_id)
-        // qui sont compatibles avec le type d'activité de l'organisation
-        // Eager load attributes to avoid lazy loading violation
-        $globalProductTypes = \App\Models\ProductType::whereNull('organization_id')
+        // Filtrer par is_service selon le type d'organisation
+        // Eager load attributes and categories to avoid lazy loading violation
+        $query = \App\Models\ProductType::whereNull('organization_id')
             ->where('is_active', true)
-            ->with('attributes')
-            ->get();
+            ->with(['attributes', 'categories' => function($q) {
+                $q->whereNull('organization_id')->where('is_active', true);
+            }]);
+        
+        // Pour les organisations mixtes, on prend tous les types
+        // Pour les autres, on filtre par is_service
+        if (!$isMixed) {
+            $query->where('is_service', $isServiceOrg);
+        }
+        
+        $globalProductTypes = $query->get();
 
         foreach ($globalProductTypes as $globalType) {
-            $compatibleActivities = $globalType->compatible_activities ?? [];
+            // Vérifier si ce type de produit existe déjà pour cette organisation (par slug)
+            $existingType = \App\Models\ProductType::where('organization_id', $organization->id)
+                ->where('slug', $globalType->slug)
+                ->first();
 
-            // Mixte = tous les types sont compatibles, sinon vérifier la compatibilité
-            if ($businessActivity === 'mixed' || in_array($businessActivity, $compatibleActivities)) {
-                // Vérifier si ce type de produit existe déjà pour cette organisation (par slug)
-                $existingType = \App\Models\ProductType::where('organization_id', $organization->id)
-                    ->where('slug', $globalType->slug)
+            if ($existingType) {
+                // Le type existe déjà, on passe au suivant
+                continue;
+            }
+
+            // Créer une copie du type de produit pour cette organisation
+            $newType = $globalType->replicate();
+            $newType->organization_id = $organization->id;
+            $newType->save();
+
+            // Copier les attributs du type de produit
+            foreach ($globalType->attributes as $attribute) {
+                // Vérifier si l'attribut existe déjà
+                $existingAttribute = \App\Models\ProductAttribute::where('product_type_id', $newType->id)
+                    ->where('name', $attribute->name)
                     ->first();
 
-                if ($existingType) {
-                    // Le type existe déjà, on passe au suivant
-                    continue;
+                if (!$existingAttribute) {
+                    $newAttribute = $attribute->replicate();
+                    $newAttribute->product_type_id = $newType->id;
+                    $newAttribute->save();
                 }
+            }
 
-                // Créer une copie du type de produit pour cette organisation
-                $newType = $globalType->replicate();
-                $newType->organization_id = $organization->id;
-                $newType->save();
+            // Copier les catégories globales associées à ce type de produit
+            foreach ($globalType->categories as $globalCategory) {
+                // Vérifier si la catégorie existe déjà (par slug)
+                $existingCategory = \App\Models\Category::where('organization_id', $organization->id)
+                    ->where('slug', $globalCategory->slug)
+                    ->first();
 
-                // Copier les attributs du type de produit
-                foreach ($globalType->attributes as $attribute) {
-                    // Vérifier si l'attribut existe déjà
-                    $existingAttribute = \App\Models\ProductAttribute::where('product_type_id', $newType->id)
-                        ->where('name', $attribute->name)
-                        ->first();
-
-                    if (!$existingAttribute) {
-                        $newAttribute = $attribute->replicate();
-                        $newAttribute->product_type_id = $newType->id;
-                        $newAttribute->save();
-                    }
-                }
-
-                // Récupérer les catégories globales associées à ce type de produit
-                $globalCategories = \App\Models\Category::whereNull('organization_id')
-                    ->where('product_type_id', $globalType->id)
-                    ->where('is_active', true)
-                    ->get();
-
-                foreach ($globalCategories as $globalCategory) {
-                    // Vérifier si la catégorie existe déjà (par slug)
-                    $existingCategory = \App\Models\Category::where('organization_id', $organization->id)
-                        ->where('slug', $globalCategory->slug)
-                        ->first();
-
-                    if (!$existingCategory) {
-                        // Créer une copie de la catégorie pour cette organisation
-                        $newCategory = $globalCategory->replicate();
-                        $newCategory->organization_id = $organization->id;
-                        $newCategory->product_type_id = $newType->id; // Lier au nouveau type de produit
-                        $newCategory->save();
-                    }
+                if (!$existingCategory) {
+                    // Créer une copie de la catégorie pour cette organisation
+                    $newCategory = $globalCategory->replicate();
+                    $newCategory->organization_id = $organization->id;
+                    $newCategory->product_type_id = $newType->id; // Lier au nouveau type de produit
+                    $newCategory->save();
                 }
             }
         }
 
-        // On crée aussi des catégories par défaut si aucune n'existe déjà
-        $this->createDefaultCategoriesIfNeeded($organization, $businessActivity);
+        // Si aucun type n'a été copié, créer des catégories par défaut
+        $orgTypesCount = \App\Models\ProductType::where('organization_id', $organization->id)->count();
+        if ($orgTypesCount === 0) {
+            $this->createDefaultCategoriesIfNeeded($organization, $businessActivity);
+        }
     }
 
     /**

@@ -4,6 +4,7 @@ namespace App\Livewire\Organization;
 
 use App\Models\Organization;
 use App\Models\SubscriptionHistory;
+use App\Services\OrganizationService;
 use Livewire\Attributes\On;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -264,6 +265,40 @@ class OrganizationIndex extends Component
         $this->historyOrgId = null;
         $this->historyOrgName = null;
         $this->historyActionFilter = '';
+    }
+
+    /**
+     * Sync product types and categories for an organization
+     */
+    public function syncProductTypesAndCategories(int $organizationId, OrganizationService $organizationService): void
+    {
+        $user = auth()->user();
+        $organization = Organization::find($organizationId);
+        
+        if (!$organization) {
+            $this->dispatch('show-toast', message: 'Organisation introuvable.', type: 'error');
+            return;
+        }
+        
+        // Super admin or organization admin can sync
+        if (!$user->isSuperAdmin() && !$user->isOrganizationAdmin($organization)) {
+            $this->dispatch('show-toast', message: 'Accès non autorisé.', type: 'error');
+            return;
+        }
+
+        try {
+            $organizationService->initializeProductTypesAndCategories($organization);
+            
+            $this->dispatch('show-toast', 
+                message: "Les types de produits et catégories de \"{$organization->name}\" ont été synchronisés.", 
+                type: 'success'
+            );
+        } catch (\Exception $e) {
+            $this->dispatch('show-toast', 
+                message: 'Erreur lors de la synchronisation: ' . $e->getMessage(), 
+                type: 'error'
+            );
+        }
     }
 
     /**

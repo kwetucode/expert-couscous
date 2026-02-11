@@ -184,8 +184,7 @@ class ProductType extends Model
 
     /**
      * Scope to filter product types for the current organization.
-     * Shows global types (organization_id = null) and organization-specific types,
-     * filtered by service type (service vs non-service organizations).
+     * Prioritizes organization-specific types over global types to avoid duplicates.
      */
     public function scopeForCurrentOrganization($query)
     {
@@ -198,12 +197,23 @@ class ProductType extends Model
 
         $isServiceOrg = is_service_organization($organization);
 
+        // Check if organization has its own types
+        $hasOwnTypes = static::where('organization_id', $organization->id)
+            ->where('is_active', true)
+            ->where('is_service', $isServiceOrg)
+            ->exists();
+
+        if ($hasOwnTypes) {
+            // Show only organization-specific types (avoid duplicates with global)
+            return $query
+                ->where('organization_id', $organization->id)
+                ->where('is_active', true)
+                ->where('is_service', $isServiceOrg);
+        }
+
+        // Fallback to global types if no org-specific types exist yet
         return $query
-            ->where(function ($q) use ($organization) {
-                // Global types (no organization_id) OR types created by this organization
-                $q->whereNull('organization_id')
-                  ->orWhere('organization_id', $organization->id);
-            })
+            ->whereNull('organization_id')
             ->where('is_active', true)
             ->where('is_service', $isServiceOrg);
     }
