@@ -56,13 +56,14 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // ===== Routes nécessitant l'accès API (plan Professional+) =====
     // Middlewares:
+    // - api.organization : Résout et vérifie l'organisation courante
     // - feature:api_access : Vérifie que le plan a accès à l'API
     // - subscription.active : Vérifie que l'abonnement est actif
     // - api.rate.limit : Applique le rate limiting selon le plan
-    Route::middleware(['feature:api_access', 'subscription.active', 'api.rate.limit'])->group(function () {
+    Route::middleware(['api.organization', 'feature:api_access', 'subscription.active', 'api.rate.limit'])->group(function () {
 
     // ===== Store API Routes =====
-    Route::prefix('stores')->name('api.stores.')->group(function () {
+    Route::prefix('stores')->name('api.stores.')->middleware('api.permission:stores.view')->group(function () {
 
         // List and filter stores
         Route::get('/', [StoreApiController::class, 'index'])->name('index');
@@ -76,8 +77,8 @@ Route::middleware('auth:sanctum')->group(function () {
         // Show specific store
         Route::get('/{id}', [StoreApiController::class, 'show'])->name('show');
 
-        // Create store (vérifie la limite de magasins)
-        Route::post('/', [StoreApiController::class, 'store'])->middleware('resource.limit:stores')->name('store');
+        // Create store (vérifie la limite de magasins + permission)
+        Route::post('/', [StoreApiController::class, 'store'])->middleware(['resource.limit:stores', 'api.permission:stores.create'])->name('store');
 
         // Update store
         Route::put('/{id}', [StoreApiController::class, 'update'])->name('update');
@@ -86,8 +87,8 @@ Route::middleware('auth:sanctum')->group(function () {
         // Delete store
         Route::delete('/{id}', [StoreApiController::class, 'destroy'])->name('destroy');
 
-        // Store actions
-        Route::post('/{id}/assign-user', [StoreApiController::class, 'assignUser'])->name('assign-user');
+        // Store actions (vérifie la limite d'utilisateurs)
+        Route::post('/{id}/assign-user', [StoreApiController::class, 'assignUser'])->middleware('resource.limit:users')->name('assign-user');
         Route::delete('/{storeId}/remove-user/{userId}', [StoreApiController::class, 'removeUser'])->name('remove-user');
         Route::post('/{id?}/switch', [StoreApiController::class, 'switchStore'])->name('switch');
 
@@ -119,7 +120,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/refresh', [MobileDashboardController::class, 'refresh'])->name('refresh');
 
         // ===== Rapports de Ventes =====
-        Route::prefix('sales')->name('sales.')->group(function () {
+        Route::prefix('sales')->name('sales.')->middleware('api.permission:sales.view')->group(function () {
             Route::get('/summary', [MobileSalesReportController::class, 'summary'])->name('summary');
             Route::get('/daily', [MobileSalesReportController::class, 'daily'])->name('daily');
             Route::get('/weekly', [MobileSalesReportController::class, 'weekly'])->name('weekly');
@@ -129,8 +130,8 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('/by-store', [MobileSalesReportController::class, 'byStore'])->name('by-store');
         });
 
-        // ===== Rapports de Stock =====
-        Route::prefix('stock')->name('stock.')->group(function () {
+        // ===== Rapports de Stock (nécessite module_stock + permission + gestion de stock active) =====
+        Route::prefix('stock')->name('stock.')->middleware(['feature:module_stock', 'api.permission:products.view', 'stock.required'])->group(function () {
             Route::get('/alerts', [MobileStockReportController::class, 'alerts'])->name('alerts');
             Route::get('/alerts/list', [MobileStockReportController::class, 'alertsList'])->name('alerts.list');
             Route::get('/summary', [MobileStockReportController::class, 'summary'])->name('summary');
@@ -158,7 +159,7 @@ Route::middleware('auth:sanctum')->group(function () {
         });
 
         // ===== Gestion des Produits =====
-        Route::prefix('products')->name('products.')->group(function () {
+        Route::prefix('products')->name('products.')->middleware('api.permission:products.view')->group(function () {
             // Recherche et utilitaires
             Route::get('/search', [MobileProductController::class, 'search'])->name('search');
             Route::get('/categories', [MobileProductController::class, 'categories'])->name('categories');
@@ -167,14 +168,14 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('/create-form-data', [MobileProductController::class, 'createFormData'])->name('create-form-data');
             Route::get('/generate-reference', [MobileProductController::class, 'generateReference'])->name('generate-reference');
 
-            // Génération d'étiquettes PDF
-            Route::post('/labels/bulk', [MobileProductController::class, 'generateBulkLabels'])->name('labels.bulk');
-            Route::get('/{id}/labels', [MobileProductController::class, 'generateLabels'])->name('labels');
+            // Génération d'étiquettes PDF (nécessite feature export_pdf)
+            Route::post('/labels/bulk', [MobileProductController::class, 'generateBulkLabels'])->middleware('feature:export_pdf')->name('labels.bulk');
+            Route::get('/{id}/labels', [MobileProductController::class, 'generateLabels'])->middleware('feature:export_pdf')->name('labels');
 
             // CRUD
             Route::get('/', [MobileProductController::class, 'index'])->name('index');
-            // Création de produit (vérifie la limite de produits)
-            Route::post('/', [MobileProductController::class, 'store'])->middleware('resource.limit:products')->name('store');
+            // Création de produit (vérifie la limite de produits + permission)
+            Route::post('/', [MobileProductController::class, 'store'])->middleware(['resource.limit:products', 'api.permission:products.create'])->name('store');
             Route::get('/{id}', [MobileProductController::class, 'show'])->name('show');
             Route::put('/{id}', [MobileProductController::class, 'update'])->name('update');
             Route::delete('/{id}', [MobileProductController::class, 'destroy'])->name('destroy');
@@ -185,7 +186,7 @@ Route::middleware('auth:sanctum')->group(function () {
         });
 
         // ===== Gestion des Taxes =====
-        Route::prefix('taxes')->name('taxes.')->group(function () {
+        Route::prefix('taxes')->name('taxes.')->middleware('api.permission:sales.view')->group(function () {
             // Utilitaires
             Route::get('/default', [MobileTaxController::class, 'default'])->name('default');
             Route::post('/calculate', [MobileTaxController::class, 'calculate'])->name('calculate');
@@ -202,8 +203,8 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::post('/{id}/set-default', [MobileTaxController::class, 'setDefault'])->name('set-default');
         });
 
-        // ===== Checkout / Facturation =====
-        Route::prefix('checkout')->name('checkout.')->group(function () {
+        // ===== Checkout / Facturation (nécessite permission sales.create) =====
+        Route::prefix('checkout')->name('checkout.')->middleware('api.permission:sales.create')->group(function () {
             // Valider le panier avant checkout
             Route::post('/validate', [\App\Http\Controllers\Api\Mobile\MobileSalesController::class, 'validateCart'])->name('validate');
 
@@ -212,7 +213,7 @@ Route::middleware('auth:sanctum')->group(function () {
         });
 
         // ===== Historique des Ventes =====
-        Route::prefix('sales')->name('sales.')->group(function () {
+        Route::prefix('sales')->name('sales.')->middleware('api.permission:sales.view')->group(function () {
             // Statistiques des ventes (cohérent avec Livewire)
             Route::get('/statistics', [\App\Http\Controllers\Api\Mobile\MobileSalesController::class, 'statistics'])->name('statistics');
 
@@ -223,11 +224,13 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('/{id}', [\App\Http\Controllers\Api\Mobile\MobileSalesController::class, 'saleDetail'])->name('detail');
         });
 
-        // ===== Rapports et Statistiques =====
-        Route::get('/reports', [\App\Http\Controllers\Api\Mobile\ReportController::class, 'index'])->name('reports');
+        // ===== Rapports et Statistiques (nécessite advanced_reports + permission) =====
+        Route::get('/reports', [\App\Http\Controllers\Api\Mobile\ReportController::class, 'index'])
+            ->middleware(['feature:advanced_reports', 'api.permission:reports.sales,reports.stock'])
+            ->name('reports');
 
-        // ===== Transfer API Routes =====
-        Route::prefix('transfers')->name('api.transfers.')->group(function () {
+        // ===== Transfer API Routes (nécessite module_transfers + permission) =====
+        Route::prefix('transfers')->name('api.transfers.')->middleware(['feature:module_transfers', 'api.permission:transfers.view', 'stock.required'])->group(function () {
 
             // List and filter transfers
             Route::get('/', [TransferApiController::class, 'index'])->name('index');
@@ -244,14 +247,14 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::post('/{id}/cancel', [TransferApiController::class, 'cancel'])->name('cancel');
         });
 
-        // ===== POS API Routes =====
-        Route::prefix('pos')->name('pos.')->group(function () {
+        // ===== POS API Routes (nécessite permission sales.create) =====
+        Route::prefix('pos')->name('pos.')->middleware('api.permission:sales.create')->group(function () {
             // Créer une vente depuis le POS
             Route::post('/sales', [\App\Http\Controllers\Api\Mobile\MobileSalesController::class, 'checkout'])->name('sales.create');
         });
 
-        // ===== Gestion des Proformas (Devis) =====
-        Route::prefix('proformas')->name('proformas.')->group(function () {
+        // ===== Gestion des Proformas (Devis) — nécessite module_proformas + permission =====
+        Route::prefix('proformas')->name('proformas.')->middleware(['feature:module_proformas', 'api.permission:sales.view'])->group(function () {
             // Utilitaires
             Route::get('/search-products', [MobileProformaController::class, 'searchProducts'])->name('search-products');
             Route::get('/statistics', [MobileProformaController::class, 'statistics'])->name('statistics');

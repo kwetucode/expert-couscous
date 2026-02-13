@@ -44,6 +44,9 @@ return Application::configure(basePath: dirname(__DIR__))
             'feature' => \App\Http\Middleware\CheckPlanFeature::class,
             'resource.limit' => \App\Http\Middleware\CheckResourceLimit::class,
             'api.rate.limit' => \App\Http\Middleware\ApiRateLimiter::class,
+            'api.organization' => \App\Http\Middleware\EnsureApiOrganizationAccess::class,
+            'api.permission' => \App\Http\Middleware\ApiCheckPermission::class,
+            'stock.required' => \App\Http\Middleware\EnsureStockManagement::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

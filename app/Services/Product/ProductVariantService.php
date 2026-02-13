@@ -43,7 +43,7 @@ class ProductVariantService
         if (!empty($manualVariants) && is_array($manualVariants)) {
             foreach ($manualVariants as $variantData) {
                 $variant = $this->createVariant($product->id, $variantData);
-                
+
                 // Save non-variant attributes to each variant
                 if (!empty($attributes)) {
                     $this->saveAttributeValues($variant->id, $attributes, false);
@@ -52,7 +52,7 @@ class ProductVariantService
         } else {
             // Create a default variant for stock management
             $variant = $this->createDefaultVariant($product);
-            
+
             // Save attributes to the default variant
             if (!empty($attributes)) {
                 $this->saveAttributeValues($variant->id, $attributes, false);
@@ -67,7 +67,10 @@ class ProductVariantService
     {
         // Generate SKU if not provided
         if (!isset($data['sku']) || empty($data['sku'])) {
-            $data['sku'] = $this->skuGenerator->generateForProduct($productId);
+            $product = Product::find($productId);
+            $data['sku'] = $product
+                ? $this->skuGenerator->generateDefault($product)
+                : 'SKU-' . strtoupper(substr(md5(uniqid()), 0, 8));
         }
 
         $data['product_id'] = $productId;
@@ -108,7 +111,7 @@ class ProductVariantService
     public function updateVariant(int $variantId, array $data): ProductVariant
     {
         $variant = $this->variantRepository->find($variantId);
-        
+
         if (!$variant) {
             throw new \Exception("Variant not found");
         }
@@ -133,7 +136,7 @@ class ProductVariantService
     public function deleteVariant(int $variantId): bool
     {
         $variant = $this->variantRepository->find($variantId);
-        
+
         if (!$variant) {
             throw new \Exception("Variant not found");
         }
@@ -154,14 +157,14 @@ class ProductVariantService
 
     /**
      * Save attribute values for a variant
-     * 
+     *
      * @param int $variantId
      * @param array $attributes Attribute ID => value pairs
      * @param bool $onlyVariantAttributes Only save variant-specific attributes
      */
     public function saveAttributeValues(
-        int $variantId, 
-        array $attributes, 
+        int $variantId,
+        array $attributes,
         bool $onlyVariantAttributes = false
     ): void {
         foreach ($attributes as $attributeId => $value) {

@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Product;
 use App\Repositories\CategoryRepository;
+use Illuminate\Support\Str;
 
 class ReferenceGeneratorService
 {
@@ -23,7 +24,9 @@ class ReferenceGeneratorService
         }
 
         // Generate prefix from category name (first 3 letters, uppercase)
-        $prefix = strtoupper(substr($category->name, 0, 3));
+        // Use Str::ascii() to transliterate accented chars (è→e, é→e, etc.)
+        // to avoid breaking multi-byte UTF-8 characters with substr()
+        $prefix = strtoupper(substr(Str::ascii($category->name), 0, 3));
 
         // Count existing products in this category (all organizations for unique reference)
         $counter = Product::withoutGlobalScope('organization')

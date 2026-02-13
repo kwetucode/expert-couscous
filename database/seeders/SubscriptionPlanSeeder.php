@@ -62,6 +62,7 @@ class SubscriptionPlanSeeder extends Seeder
                     'advanced_reports',
                     'multi_store',
                     'export_excel',
+                    'api_access',
                     'module_stock',
                     'module_invoices',
                     'module_sales',

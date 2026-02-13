@@ -6,6 +6,7 @@ use App\Enums\BusinessActivityType;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\DB;
 
 class ProductType extends Model
 {
@@ -184,12 +185,13 @@ class ProductType extends Model
 
     /**
      * Scope to filter product types for the current organization.
-     * Prioritizes organization-specific types over global types to avoid duplicates.
+     * Shows organization-specific types plus any global types not yet copied.
+     * This ensures new types added to the global list are immediately available.
      */
     public function scopeForCurrentOrganization($query)
     {
         $organization = current_organization();
-        
+
         if (!$organization) {
             // No organization context, show all active types
             return $query->where('is_active', true);
@@ -197,25 +199,27 @@ class ProductType extends Model
 
         $isServiceOrg = is_service_organization($organization);
 
-        // Check if organization has its own types
-        $hasOwnTypes = static::where('organization_id', $organization->id)
+        // Return organization-specific types plus global types not yet copied
+        return $query
             ->where('is_active', true)
             ->where('is_service', $isServiceOrg)
-            ->exists();
-
-        if ($hasOwnTypes) {
-            // Show only organization-specific types (avoid duplicates with global)
-            return $query
-                ->where('organization_id', $organization->id)
-                ->where('is_active', true)
-                ->where('is_service', $isServiceOrg);
-        }
-
-        // Fallback to global types if no org-specific types exist yet
-        return $query
-            ->whereNull('organization_id')
-            ->where('is_active', true)
-            ->where('is_service', $isServiceOrg);
+            ->where(function ($subQuery) use ($organization) {
+                $subQuery
+                    // Show types belonging to this organization
+                    ->where('organization_id', $organization->id)
+                    // OR show global types not yet copied to this organization
+                    ->orWhere(function ($globalQuery) use ($organization) {
+                        $globalQuery
+                            ->whereNull('organization_id')
+                            ->whereNotExists(function ($checkQuery) use ($organization) {
+                                $checkQuery
+                                    ->select(\DB::raw(1))
+                                    ->from('product_types as pt_check')
+                                    ->where('pt_check.organization_id', $organization->id)
+                                    ->whereRaw('pt_check.slug = product_types.slug');
+                            });
+                    });
+            });
     }
 
     /**

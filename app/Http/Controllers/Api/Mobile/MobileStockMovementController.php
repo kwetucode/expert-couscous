@@ -40,7 +40,7 @@ class MobileStockMovementController extends Controller
         try {
             // Rafraîchir l'utilisateur pour obtenir le current_store_id à jour
             $user = Auth::user()->fresh();
-            
+
             $perPage = (int) $request->input('per_page', 20);
             $perPage = min(max($perPage, 10), 100);
 
@@ -130,6 +130,15 @@ class MobileStockMovementController extends Controller
      */
     public function addStock(Request $request): JsonResponse
     {
+        // Vérifier que l'organisation n'est pas de type service uniquement
+        if (is_service_organization()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'La gestion de stock n\'est pas disponible pour les organisations de type service.',
+                'error' => 'stock_not_available_for_services',
+            ], 403);
+        }
+
         $validator = Validator::make($request->all(), [
             'product_variant_id' => 'required|exists:product_variants,id',
             'quantity' => 'required|integer|min:1',
@@ -181,6 +190,15 @@ class MobileStockMovementController extends Controller
      */
     public function removeStock(Request $request): JsonResponse
     {
+        // Vérifier que l'organisation n'est pas de type service uniquement
+        if (is_service_organization()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'La gestion de stock n\'est pas disponible pour les organisations de type service.',
+                'error' => 'stock_not_available_for_services',
+            ], 403);
+        }
+
         $validator = Validator::make($request->all(), [
             'product_variant_id' => 'required|exists:product_variants,id',
             'quantity' => 'required|integer|min:1',
@@ -239,6 +257,15 @@ class MobileStockMovementController extends Controller
      */
     public function adjustStock(Request $request): JsonResponse
     {
+        // Vérifier que l'organisation n'est pas de type service uniquement
+        if (is_service_organization()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'La gestion de stock n\'est pas disponible pour les organisations de type service.',
+                'error' => 'stock_not_available_for_services',
+            ], 403);
+        }
+
         $validator = Validator::make($request->all(), [
             'product_variant_id' => 'required|exists:product_variants,id',
             'new_quantity' => 'required|integer|min:0',

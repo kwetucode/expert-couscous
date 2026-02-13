@@ -158,6 +158,22 @@ class MobileProductController extends Controller
             // Générer automatiquement le QR code (contient la référence du produit)
             $data['qr_code'] = $this->generateQrCode($data['reference']);
 
+            // Vérifier si le type de produit est un service
+            $productType = $data['product_type_id']
+                ? \App\Models\ProductType::find($data['product_type_id'])
+                : null;
+            $isServiceProduct = $productType?->is_service ?? false;
+
+            // Appliquer les défauts pour les produits de type service
+            if ($isServiceProduct) {
+                // Les services n'ont pas de coût d'achat significatif, par défaut 0
+                $data['cost_price'] = $data['cost_price'] ?? 0;
+                // Stock illimité pour les services
+                $data['initial_stock'] = 999999;
+                // Pas de seuil d'alerte stock pour les services
+                $data['stock_alert_threshold'] = 0;
+            }
+
             // Gérer le stock initial
             $initialStock = $data['initial_stock'] ?? 0;
             unset($data['initial_stock']);
@@ -167,7 +183,7 @@ class MobileProductController extends Controller
                 $data['variants'] = [
                     [
                         'stock_quantity' => $initialStock,
-                        'price' => $data['price'],
+                        'additional_price' => 0,
                     ],
                 ];
             }
@@ -186,7 +202,7 @@ class MobileProductController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage(),
+                'message' => mb_convert_encoding($e->getMessage(), 'UTF-8', 'UTF-8'),
             ], 400);
         }
     }
@@ -452,6 +468,7 @@ class MobileProductController extends Controller
                         'name' => $pt->name,
                         'slug' => $pt->slug,
                         'description' => $pt->description,
+                        'is_service' => (bool) $pt->is_service,
                         'has_variants' => $pt->has_variants,
                         'has_stock_management' => $pt->has_stock_management,
                         'icon' => $pt->icon,
@@ -508,6 +525,7 @@ class MobileProductController extends Controller
                     'name' => $productType->name,
                     'slug' => $productType->slug,
                     'description' => $productType->description,
+                    'is_service' => (bool) $productType->is_service,
                     'has_variants' => $productType->has_variants,
                     'has_stock_management' => $productType->has_stock_management,
                     'icon' => $productType->icon,
@@ -548,8 +566,10 @@ class MobileProductController extends Controller
     {
         try {
             $productTypeId = $request->input('product_type_id');
+            $organization = current_organization();
+            $isServiceOrg = is_service_organization($organization);
 
-            // 1. Récupérer tous les types de produits avec leurs attributs
+            // 1. Récupérer les types de produits filtrés par activité de l'organisation
             $productTypes = $this->productTypeRepository->allActive();
             $productTypes->load('attributes');
 
@@ -569,6 +589,7 @@ class MobileProductController extends Controller
                             'name' => $pt->name,
                             'slug' => $pt->slug,
                             'description' => $pt->description,
+                            'is_service' => (bool) $pt->is_service,
                             'has_variants' => $pt->has_variants,
                             'has_stock_management' => $pt->has_stock_management,
                             'icon' => $pt->icon,
@@ -590,6 +611,16 @@ class MobileProductController extends Controller
                         'product_type_id' => $c->product_type_id,
                     ]),
                     'selected_product_type_id' => $productTypeId ? (int) $productTypeId : null,
+                    'business_activity' => [
+                        'type' => $organization?->business_activity?->value ?? 'retail',
+                        'is_service_organization' => $isServiceOrg,
+                        'has_stock_management' => has_stock_management($organization),
+                        'defaults' => [
+                            'cost_price' => $isServiceOrg ? 0 : null,
+                            'stock_quantity' => $isServiceOrg ? 999999 : 0,
+                        ],
+                        'hidden_fields' => $isServiceOrg ? ['weight', 'dimensions', 'expiry_date', 'variants'] : [],
+                    ],
                 ],
             ]);
         } catch (\Exception $e) {
@@ -682,9 +713,10 @@ class MobileProductController extends Controller
      */
     private function formatProduct(Product $product): array
     {
-        $totalStock = $product->variants->sum('stock_quantity');
-        $isLowStock = $totalStock <= ($product->stock_alert_threshold ?? 10) && $totalStock > 0;
-        $isOutOfStock = $totalStock <= 0;
+        $isService = $product->productType?->is_service ?? false;
+        $totalStock = $isService ? null : $product->variants->sum('stock_quantity');
+        $isLowStock = !$isService && $totalStock <= ($product->stock_alert_threshold ?? 10) && $totalStock > 0;
+        $isOutOfStock = !$isService && $totalStock <= 0;
 
         return [
             'id' => $product->id,
@@ -696,15 +728,23 @@ class MobileProductController extends Controller
             'cost_price' => $product->cost_price,
             'status' => $product->status,
             'image' => $product->image,
+            'is_service' => (bool) $isService,
             'category' => $product->category ? [
                 'id' => $product->category->id,
                 'name' => $product->category->name,
             ] : null,
-            'stock' => [
+            'stock' => $isService ? [
+                'total' => null,
+                'is_low_stock' => false,
+                'is_out_of_stock' => false,
+                'alert_threshold' => null,
+                'unlimited' => true,
+            ] : [
                 'total' => $totalStock,
                 'is_low_stock' => $isLowStock,
                 'is_out_of_stock' => $isOutOfStock,
                 'alert_threshold' => $product->stock_alert_threshold,
+                'unlimited' => false,
             ],
             'variants_count' => $product->variants->count(),
             'created_at' => $product->created_at?->toIso8601String(),
@@ -716,13 +756,16 @@ class MobileProductController extends Controller
      */
     private function formatProductSimple(Product $product): array
     {
+        $isService = $product->productType?->is_service ?? false;
+
         return [
             'id' => $product->id,
             'name' => $product->name,
             'reference' => $product->reference,
             'barcode' => $product->barcode,
             'price' => $product->price,
-            'stock' => $product->variants->sum('stock_quantity'),
+            'stock' => $isService ? null : $product->variants->sum('stock_quantity'),
+            'is_service' => (bool) $isService,
             'category' => $product->category?->name,
             'image' => $product->image,
         ];
@@ -741,7 +784,9 @@ class MobileProductController extends Controller
             'id' => $product->productType->id,
             'name' => $product->productType->name,
             'slug' => $product->productType->slug,
+            'is_service' => (bool) $product->productType->is_service,
             'has_variants' => $product->productType->has_variants,
+            'has_stock_management' => $product->productType->has_stock_management,
         ] : null;
 
         $data['variants'] = $product->variants->map(function ($variant) {

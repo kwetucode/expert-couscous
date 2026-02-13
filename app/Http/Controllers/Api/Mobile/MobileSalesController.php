@@ -94,7 +94,7 @@ class MobileSalesController extends Controller
             $items = $request->input('items');
             $discount = (float) ($request->input('discount', 0));
             $tax = (float) ($request->input('tax', 0));
-            
+
             // Déterminer le store_id (requête ou store actuel de l'utilisateur)
             $storeId = $request->input('store_id') ? (int) $request->input('store_id') : null;
             if (!$storeId) {
@@ -273,7 +273,7 @@ class MobileSalesController extends Controller
             // Si variant_id est fourni, l'utiliser directement
             if (!empty($item['variant_id'])) {
                 $variant = \App\Models\ProductVariant::with('product')->find($item['variant_id']);
-                
+
                 if (!$variant) {
                     throw new \Exception("Variante {$item['variant_id']} introuvable");
                 }
@@ -281,14 +281,14 @@ class MobileSalesController extends Controller
             // Sinon, utiliser product_id et récupérer la première variante
             elseif (!empty($item['product_id'])) {
                 $product = \App\Models\Product::with('variants')->find($item['product_id']);
-                
+
                 if (!$product) {
                     throw new \Exception("Produit {$item['product_id']} introuvable");
                 }
-                
+
                 // Récupérer la première variante disponible
                 $variant = $product->variants()->first();
-                
+
                 if (!$variant) {
                     throw new \Exception("Le produit {$product->name} n'a pas de variante disponible");
                 }
@@ -315,9 +315,24 @@ class MobileSalesController extends Controller
     private function validateStock(array $items): array
     {
         foreach ($items as $item) {
-            $variant = \App\Models\ProductVariant::find($item['variant_id']);
+            $variant = \App\Models\ProductVariant::with('product.productType')->find($item['variant_id']);
 
-            if (!$variant || $variant->stock_quantity < $item['quantity']) {
+            if (!$variant) {
+                return [
+                    'valid' => false,
+                    'product_name' => $item['product_name'] ?? 'Produit',
+                    'requested' => $item['quantity'],
+                    'available' => 0,
+                ];
+            }
+
+            // Les produits de type service ont un stock illimité, pas de validation
+            $isService = $variant->product?->productType?->is_service ?? false;
+            if ($isService) {
+                continue;
+            }
+
+            if ($variant->stock_quantity < $item['quantity']) {
                 return [
                     'valid' => false,
                     'product_name' => $item['product_name'] ?? 'Produit',
@@ -650,8 +665,8 @@ class MobileSalesController extends Controller
                         'total_amount' => $completed->sum('total'),
                         'pending_sales' => $pending->count(),
                         'pending_amount' => $pending->sum('total'),
-                        'average_ticket' => $completed->count() > 0 
-                            ? round($completed->sum('total') / $completed->count(), 2) 
+                        'average_ticket' => $completed->count() > 0
+                            ? round($completed->sum('total') / $completed->count(), 2)
                             : 0,
                     ],
                     'payment_methods' => $this->getPaymentMethodStats($completed),
