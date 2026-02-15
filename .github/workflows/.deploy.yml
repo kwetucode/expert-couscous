@@ -232,6 +232,7 @@ jobs:
           rm: false
           overwrite: true
           strip_components: 0
+          debug: true
         # Transfère tous les fichiers du projet vers le serveur distant via SCP
 
       - name: 🔧 Run artisan commands remotely
@@ -244,7 +245,6 @@ jobs:
           script: |
             cd ${{ secrets.DEPLOY_PATH }}
             php artisan migrate --force
-            php artisan db:seed --force
             php artisan key:generate
             php artisan config:cache
             php artisan route:cache
