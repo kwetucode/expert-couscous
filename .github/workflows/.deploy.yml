@@ -220,7 +220,20 @@ jobs:
         run: composer install --no-dev --optimize-autoloader
         # Installe les dépendances PHP sans les dépendances de développement
 
-      - name: � Ensure target directory exists
+      - name: ✅ Validate required secrets
+        run: |
+          missing=""
+          [ -z "${{ secrets.SSH_HOST }}" ] && missing="$missing SSH_HOST"
+          [ -z "${{ secrets.SSH_USERNAME }}" ] && missing="$missing SSH_USERNAME"
+          [ -z "${{ secrets.SSH_PRIVATE_KEY }}" ] && missing="$missing SSH_PRIVATE_KEY"
+          [ -z "${{ secrets.SSH_PORT }}" ] && missing="$missing SSH_PORT"
+          [ -z "${{ secrets.DEPLOY_PATH }}" ] && missing="$missing DEPLOY_PATH"
+          if [ -n "$missing" ]; then
+            echo "❌ Missing required secrets:$missing"
+            exit 1
+          fi
+
+      - name: 📂 Ensure target directory exists
         uses: appleboy/ssh-action@v1.1.0
         with:
           host: ${{ secrets.SSH_HOST }}
@@ -228,7 +241,7 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT }}
           script: |
-            mkdir -p ${{ secrets.DEPLOY_PATH }}
+            mkdir -p "${{ secrets.DEPLOY_PATH }}"
 
       - name: 🚀 Deploy to Hostinger via SSH
         uses: appleboy/scp-action@v0.1.7
