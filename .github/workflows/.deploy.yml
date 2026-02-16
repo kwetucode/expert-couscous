@@ -220,8 +220,18 @@ jobs:
         run: composer install --no-dev --optimize-autoloader
         # Installe les dépendances PHP sans les dépendances de développement
 
+      - name: � Ensure target directory exists
+        uses: appleboy/ssh-action@v1.1.0
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          script: |
+            mkdir -p ${{ secrets.DEPLOY_PATH }}
+
       - name: 🚀 Deploy to Hostinger via SSH
-        uses: appleboy/scp-action@v0.1.4
+        uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USERNAME }}
@@ -233,6 +243,8 @@ jobs:
           overwrite: true
           strip_components: 0
           debug: true
+          command_timeout: 30m
+          timeout: 600s
         # Transfère tous les fichiers du projet vers le serveur distant via SCP
 
       - name: 🔧 Run artisan commands remotely
