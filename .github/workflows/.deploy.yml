@@ -233,7 +233,7 @@ jobs:
             exit 1
           fi
 
-      - name: 📂 Ensure target directory exists
+      - name: 🧹 Clean and prepare deploy directory
         uses: appleboy/ssh-action@v1.1.0
         with:
           host: ${{ secrets.SSH_HOST }}
@@ -241,7 +241,45 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT }}
           script: |
-            mkdir -p "${{ secrets.DEPLOY_PATH }}"
+            DEPLOY_DIR="${{ secrets.DEPLOY_PATH }}"
+            echo "📂 Deploy path: $DEPLOY_DIR"
+
+            # Ensure the deploy directory exists
+            mkdir -p "$DEPLOY_DIR"
+
+            # Handle public_html symlink
+            DOMAIN_DIR=$(dirname "$DEPLOY_DIR")
+            PUBLIC_HTML="$DOMAIN_DIR/public_html"
+
+            # If public_html is a symlink, leave it as-is
+            # If public_html is a real directory, back it up and create symlink
+            if [ -L "$PUBLIC_HTML" ]; then
+              echo "✅ public_html is already a symlink -> $(readlink -f $PUBLIC_HTML)"
+            elif [ -d "$PUBLIC_HTML" ]; then
+              echo "⚠️ public_html is a real directory, converting to symlink..."
+              mv "$PUBLIC_HTML" "${PUBLIC_HTML}_backup_$(date +%Y%m%d%H%M%S)"
+              ln -s "$DEPLOY_DIR" "$PUBLIC_HTML"
+              echo "✅ public_html is now a symlink -> $DEPLOY_DIR"
+            fi
+
+            # Clean old deployment files (keep .env, storage, .htaccess)
+            cd "$DEPLOY_DIR"
+            echo "🧹 Cleaning old files..."
+            find . -maxdepth 1 \
+              ! -name '.' \
+              ! -name '.env' \
+              ! -name '.htaccess' \
+              ! -name 'storage' \
+              ! -name 'public_html' \
+              -exec rm -rf {} + 2>/dev/null || true
+
+            # Ensure storage structure exists and is preserved
+            mkdir -p storage/framework/{sessions,views,cache/data}
+            mkdir -p storage/logs
+            mkdir -p storage/app/public
+            mkdir -p bootstrap/cache
+
+            echo "✅ Deploy directory ready"
 
       - name: 🚀 Deploy to Hostinger via SSH
         uses: appleboy/scp-action@v0.1.7
