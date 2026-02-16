@@ -20,14 +20,14 @@ class CategoryRepository
     }
 
     /**
-     * Get all categories globally (without organization filtering).
-     * Shows all active categories regardless of organization.
-     * Used for product forms where categories are managed by super admin.
+     * Get all categories globally for product filters.
+     * Bypasses the organization global scope and uses forCurrentOrganization
+     * to properly include global categories and service-type filtering.
      */
     public function allGlobal(): Collection
     {
-        return Category::query()
-            ->where('is_active', true)
+        return Category::withoutOrganizationScope()
+            ->forCurrentOrganization()
             ->orderBy('name')
             ->get();
     }
