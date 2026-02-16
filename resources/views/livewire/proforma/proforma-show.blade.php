@@ -50,7 +50,8 @@
                 @if($proforma->client_phone)
                     @php
                         $whatsappNumber = preg_replace('/[^0-9]/', '', $proforma->client_phone);
-                        $whatsappMessage = urlencode("Bonjour,\n\nVeuillez trouver ci-joint votre facture proforma {$proforma->proforma_number} d'un montant de " . format_currency($proforma->total) . ".\n\nVous pouvez la consulter ici : " . route('proformas.pdf.view', $proforma) . "\n\nCordialement,\n" . ($proforma->store->name ?? config('app.name')));
+                        $pdfUrl = \Illuminate\Support\Facades\URL::temporarySignedRoute('public.proformas.pdf', now()->addDays(7), ['proforma' => $proforma->id]);
+                        $whatsappMessage = urlencode("Bonjour,\n\nVeuillez trouver ci-joint votre facture proforma {$proforma->proforma_number} d'un montant de " . format_currency($proforma->total) . ".\n\nVous pouvez la t\xe9l\xe9charger ici : " . $pdfUrl . "\n\nCordialement,\n" . ($proforma->store->name ?? config('app.name')));
                     @endphp
                     <a href="https://wa.me/{{ $whatsappNumber }}?text={{ $whatsappMessage }}"
                        target="_blank"
@@ -118,7 +119,8 @@
                         @if($proforma->client_phone)
                             @php
                                 $whatsappNumber = preg_replace('/[^0-9]/', '', $proforma->client_phone);
-                                $whatsappMessage = urlencode("Bonjour,\n\nVeuillez trouver ci-joint votre facture proforma {$proforma->proforma_number} d'un montant de " . format_currency($proforma->total) . ".\n\nVous pouvez la consulter ici : " . route('proformas.pdf.view', $proforma) . "\n\nCordialement,\n" . ($proforma->store->name ?? config('app.name')));
+                                $pdfUrl = \Illuminate\Support\Facades\URL::temporarySignedRoute('public.proformas.pdf', now()->addDays(7), ['proforma' => $proforma->id]);
+                                $whatsappMessage = urlencode("Bonjour,\n\nVeuillez trouver ci-joint votre facture proforma {$proforma->proforma_number} d'un montant de " . format_currency($proforma->total) . ".\n\nVous pouvez la t\xe9l\xe9charger ici : " . $pdfUrl . "\n\nCordialement,\n" . ($proforma->store->name ?? config('app.name')));
                             @endphp
                             <a href="https://wa.me/{{ $whatsappNumber }}?text={{ $whatsappMessage }}"
                                target="_blank"

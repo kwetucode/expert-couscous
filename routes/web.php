@@ -233,6 +233,14 @@ Route::prefix('organization/invitation')->name('organization.invitation.')->grou
     Route::delete('/{token}/decline', [OrganizationInvitationController::class, 'decline'])->name('decline');
 });
 
+// Public signed routes for invoice/proforma PDF (no auth required, shared via WhatsApp)
+Route::prefix('public')->name('public.')->middleware('signed')->group(function () {
+    Route::get('/invoices/{invoice}/pdf', [\App\Http\Controllers\InvoicePdfController::class, 'publicDownload'])->name('invoices.pdf');
+    Route::get('/invoices/{invoice}/pdf/view', [\App\Http\Controllers\InvoicePdfController::class, 'publicStream'])->name('invoices.pdf.view');
+    Route::get('/proformas/{proforma}/pdf', [\App\Http\Controllers\ProformaPdfController::class, 'publicDownload'])->name('proformas.pdf');
+    Route::get('/proformas/{proforma}/pdf/view', [\App\Http\Controllers\ProformaPdfController::class, 'publicStream'])->name('proformas.pdf.view');
+});
+
 // Shwary Webhook Routes moved to routes/api.php (prefix: /api/webhooks/shwary)
 // This ensures webhooks bypass web middleware (CSRF, auth, organization checks, etc.)
 

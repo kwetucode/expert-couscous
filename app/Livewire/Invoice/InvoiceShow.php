@@ -9,6 +9,7 @@ use App\Mail\InvoiceMail;
 use App\Models\Client;
 use App\Repositories\InvoiceRepository;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\URL;
 use Livewire\Component;
 
 class InvoiceShow extends Component
@@ -143,11 +144,17 @@ class InvoiceShow extends Component
             $this->invoice = $repository->find($this->invoiceId);
         }
 
-        // Générer le lien WhatsApp
+        // Générer le lien WhatsApp avec URL signée (valide 7 jours, sans authentification)
+        $pdfUrl = URL::temporarySignedRoute(
+            'public.invoices.pdf',
+            now()->addDays(7),
+            ['invoice' => $this->invoice->id]
+        );
+
         $whatsappNumber = preg_replace('/[^0-9]/', '', $this->contactPhone);
         $message = "Bonjour" . ($this->contactName ? " {$this->contactName}" : "") . ",\n\n";
         $message .= "Veuillez trouver ci-joint votre facture {$this->invoice->invoice_number} d'un montant de " . format_currency($this->invoice->total) . ".\n\n";
-        $message .= "Vous pouvez la consulter ici : " . route('invoices.pdf.view', $this->invoice) . "\n\n";
+        $message .= "Vous pouvez la télécharger ici : " . $pdfUrl . "\n\n";
         $message .= "Cordialement,\n" . ($this->invoice->organization?->name ?? config('app.name'));
 
         $whatsappUrl = "https://wa.me/{$whatsappNumber}?text=" . urlencode($message);

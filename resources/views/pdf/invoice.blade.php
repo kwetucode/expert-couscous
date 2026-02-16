@@ -434,7 +434,7 @@
                             </td>
                             <td class="text-center">{{ $item->quantity }}</td>
                             <td class="text-right">{{ format_currency($item->unit_price) }}</td>
-                            <td class="text-right">{{ format_currency($item->total_price) }}</td>
+                            <td class="text-right">{{ format_currency($item->subtotal ?? ($item->unit_price * $item->quantity)) }}</td>
                         </tr>
                     @endforeach
                 </tbody>

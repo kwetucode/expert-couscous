@@ -6,6 +6,7 @@ use App\Mail\ProformaInvoiceMail;
 use App\Models\ProformaInvoice;
 use App\Services\ProformaService;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\URL;
 use Livewire\Component;
 
 class ProformaShow extends Component
@@ -116,11 +117,17 @@ class ProformaShow extends Component
             $this->proforma = $this->proforma->fresh(['items.productVariant.product', 'store', 'user', 'convertedInvoice']);
         }
 
-        // Générer le lien WhatsApp
+        // Générer le lien WhatsApp avec URL signée (valide 7 jours, sans authentification)
+        $pdfUrl = URL::temporarySignedRoute(
+            'public.proformas.pdf',
+            now()->addDays(7),
+            ['proforma' => $this->proforma->id]
+        );
+
         $whatsappNumber = preg_replace('/[^0-9]/', '', $this->contactPhone);
         $message = "Bonjour" . ($this->contactName ? " {$this->contactName}" : "") . ",\n\n";
         $message .= "Veuillez trouver ci-joint votre facture proforma {$this->proforma->proforma_number} d'un montant de " . format_currency($this->proforma->total) . ".\n\n";
-        $message .= "Vous pouvez la consulter ici : " . route('proformas.pdf.view', $this->proforma) . "\n\n";
+        $message .= "Vous pouvez la télécharger ici : " . $pdfUrl . "\n\n";
         $message .= "Cordialement,\n" . ($this->proforma->store->name ?? config('app.name'));
 
         $whatsappUrl = "https://wa.me/{$whatsappNumber}?text=" . urlencode($message);
